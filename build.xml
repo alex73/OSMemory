@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project default="build">
+
+    <property name="version" value="1.0" />
+
+    <target name="clean">
+        <delete dir="build" />
+        <delete dir="dist" />
+    </target>
+
+    <target name="build" depends="clean">
+        <mkdir dir="build/classes" />
+        <javac destdir="build/classes" debug="true" encoding="UTF-8" includeAntRuntime="false">
+            <src path="src" />
+            <classpath>
+                <fileset dir="lib" includes="**/*.jar" />
+            </classpath>
+        </javac>
+        <copy todir="build/classes">
+            <fileset dir="src" />
+        </copy>
+        <mkdir dir="dist" />
+        <jar destfile="dist/osmemory-${version}.jar" basedir="build/classes">
+            <manifest>
+                <attribute name="OSMemory-version" value="${version}" />
+            </manifest>
+        </jar>
+        <copy todir="dist">
+            <fileset dir="lib" />
+        </copy>
+    </target>
+</project>
