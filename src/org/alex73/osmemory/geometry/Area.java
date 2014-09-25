@@ -17,10 +17,16 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-package org.alex73.osmemory;
+package org.alex73.osmemory.geometry;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.alex73.osmemory.IOsmNode;
+import org.alex73.osmemory.IOsmObject;
+import org.alex73.osmemory.IOsmRelation;
+import org.alex73.osmemory.IOsmWay;
+import org.alex73.osmemory.MemoryStorage;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;

@@ -17,7 +17,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-package org.alex73.osmemory;
+package org.alex73.osmemory.geometry;
 
 import java.util.List;
 

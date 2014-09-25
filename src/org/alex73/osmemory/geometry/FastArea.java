@@ -17,7 +17,16 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-package org.alex73.osmemory;
+package org.alex73.osmemory.geometry;
+
+import org.alex73.osmemory.IOsmNode;
+import org.alex73.osmemory.IOsmObject;
+import org.alex73.osmemory.IOsmRelation;
+import org.alex73.osmemory.IOsmWay;
+import org.alex73.osmemory.MemoryStorage;
+import org.alex73.osmemory.OsmNode;
+import org.alex73.osmemory.OsmRelation;
+import org.alex73.osmemory.OsmWay;
 
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
@@ -88,6 +97,22 @@ public class FastArea {
         } else {
             return intersection;// .union(intersection.buffer(0.001));
         }
+    }
+
+    public boolean interceptBox(Envelope box) {
+        if (maxx < box.getMinX() / OsmNode.DIVIDER) {
+            return false;
+        }
+        if (minx > box.getMaxX() / OsmNode.DIVIDER) {
+            return false;
+        }
+        if (maxy < box.getMinY() / OsmNode.DIVIDER) {
+            return false;
+        }
+        if (miny > box.getMaxY() / OsmNode.DIVIDER) {
+            return false;
+        }
+        return true;
     }
 
     public boolean contains(IOsmObject obj) {
