@@ -32,11 +32,13 @@ public abstract class OsmBase implements IOsmObject {
     protected final long id;
     protected final short[] tagKeys;
     protected final byte[][] tagValues;
+    protected final short user;
 
-    public OsmBase(long id, int tagsCount) {
+    public OsmBase(long id, int tagsCount, short user) {
         this.id = id;
         tagKeys = new short[tagsCount];
         tagValues = new byte[tagsCount][];
+        this.user = user;
     }
 
     public long getId() {
@@ -58,6 +60,12 @@ public abstract class OsmBase implements IOsmObject {
         return hasTag(tagKey);
     }
 
+    @Override
+    public short[] getTags() {
+        return tagKeys;
+    }
+
+    @Override
     public String getTag(short tagKey) {
         for (int i = 0; i < tagKeys.length; i++) {
             if (tagKeys[i] == tagKey) {
@@ -83,5 +91,15 @@ public abstract class OsmBase implements IOsmObject {
             result.put(tagName, new String(tagValues[i], UTF8));
         }
         return result;
+    }
+
+    @Override
+    public short getUser() {
+        return user;
+    }
+
+    @Override
+    public String getUser(MemoryStorage storage) {
+        return storage.getUsersPack().getTagName(user);
     }
 }

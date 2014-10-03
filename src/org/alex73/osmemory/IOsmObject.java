@@ -53,6 +53,11 @@ public interface IOsmObject {
     boolean hasTag(short tagKey);
 
     /**
+     * Get tags list.
+     */
+    short[] getTags();
+
+    /**
      * Check if object has tag. This operation is much slower than {@link #hasTag(short)}.
      */
     boolean hasTag(String tagName, MemoryStorage storage);
@@ -73,6 +78,16 @@ public interface IOsmObject {
      * Get object code, like n123, w75, r51.
      */
     String getObjectCode();
+
+    /**
+     * Get user code.
+     */
+    short getUser();
+
+    /**
+     * Get user name.
+     */
+    String getUser(MemoryStorage storage);
 
     static String getNodeCode(long nodeId) {
         return "n" + nodeId;

@@ -30,6 +30,7 @@ import org.alex73.osmemory.OsmWay;
 
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
@@ -54,16 +55,16 @@ public class FastArea {
 
     private final int minx, maxx, miny, maxy, stepx, stepy;
     private final MemoryStorage storage;
-    private final Area poly;
+    private final Geometry polygon;
     private final Geometry[][] cachedGeo;
 
-    public FastArea(Area poly, MemoryStorage storage) throws Exception {
-        if (poly == null || storage == null) {
+    public FastArea(Geometry polygon, MemoryStorage storage) {
+        if (polygon == null || storage == null) {
             throw new IllegalArgumentException();
         }
         this.storage = storage;
-        this.poly = poly;
-        Envelope bo = poly.geom.getEnvelopeInternal();
+        this.polygon = polygon;
+        Envelope bo = polygon.getEnvelopeInternal();
         minx = (int) (bo.getMinX() / OsmNode.DIVIDER) - 1;
         maxx = (int) (bo.getMaxX() / OsmNode.DIVIDER) + 1;
         miny = (int) (bo.getMinY() / OsmNode.DIVIDER) - 1;
@@ -89,7 +90,7 @@ public class FastArea {
         double miy = uly * OsmNode.DIVIDER;
         double may = (uly + stepy - 1) * OsmNode.DIVIDER;
         Polygon p = GeometryHelper.createBoxPolygon(mix, max, miy, may);
-        Geometry intersection = poly.geom.intersection(p);
+        Geometry intersection = polygon.intersection(p);
         if (intersection.isEmpty()) {
             return GEO_EMPTY;
         } else if (intersection.equalsExact(p)) {
@@ -117,11 +118,11 @@ public class FastArea {
 
     public boolean contains(IOsmObject obj) {
         if (obj instanceof IOsmNode) {
-            return containsNode((OsmNode) obj);
+            return containsNode((IOsmNode) obj);
         } else if (obj instanceof OsmWay) {
-            return containsWay((OsmWay) obj);
+            return containsWay((IOsmWay) obj);
         } else if (obj instanceof OsmRelation) {
-            return containsRelation((OsmRelation) obj);
+            return containsRelation((IOsmRelation) obj);
         } else {
             throw new RuntimeException("Unknown object type: " + obj.getObjectCode());
         }
@@ -146,8 +147,18 @@ public class FastArea {
             return true;
         } else {
             Point p = GeometryHelper.createPoint(node.getLongitude(), node.getLatitude());
-            boolean result = cached.covers(p);
-            return result;
+            if (cached instanceof GeometryCollection) {
+                // cached can be collection of point and polygon, but covers doesn't work with collection
+                GeometryCollection cachedCollection=(GeometryCollection)cached;
+                for(int i=0;i<cachedCollection.getNumGeometries();i++) {
+                    if (cachedCollection.getGeometryN(i).contains(p)) {
+                        return true;
+                    }
+                }
+                return false;
+            } else {
+                return cached.covers(p);
+            }
         }
     }
 

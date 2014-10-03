@@ -75,6 +75,12 @@ public class O5MDriver {
     private int[] memberRolePositions = new int[8192];
     private int[] memberRoleSizes = new int[8192];
 
+    private long currentId;
+    private long currentTimestamp;
+    private int currentVersion;
+    private long currentChangeset;
+    private String currentUser;
+
     private void resetDeltas() {
         deltaId.value = 0;
         deltaTimestamp.value = 0;
@@ -141,7 +147,7 @@ public class O5MDriver {
     }
 
     void readNode() {
-        long id = readSignedNumber(deltaId);
+        currentId = readSignedNumber(deltaId);
 
         if (buffer.position() >= datasetEndPos) {
             return;
@@ -157,11 +163,11 @@ public class O5MDriver {
         while (buffer.position() < datasetEndPos) {
             readObjectTag();
         }
-        handler.createNode(this, id, latitude, longitude);
+        handler.createNode(this, currentId, latitude, longitude, currentUser);
     }
 
     void readWay() {
-        long id = readSignedNumber(deltaId);
+        currentId = readSignedNumber(deltaId);
 
         if (buffer.position() >= datasetEndPos) {
             return;
@@ -184,11 +190,11 @@ public class O5MDriver {
         while (buffer.position() < datasetEndPos) {
             readObjectTag();
         }
-        handler.createWay(this, id, Arrays.copyOf(nodes, c));
+        handler.createWay(this, currentId, Arrays.copyOf(nodes, c), currentUser);
     }
 
     void readRelation() {
-        long id = readSignedNumber(deltaId);
+        currentId = readSignedNumber(deltaId);
 
         if (buffer.position() >= datasetEndPos) {
             return;
@@ -226,20 +232,47 @@ public class O5MDriver {
         while (buffer.position() < datasetEndPos) {
             readObjectTag();
         }
-        handler.createRelation(this, id, Arrays.copyOf(nodes, c), Arrays.copyOf(memberTypes, c));
+        handler.createRelation(this, currentId, Arrays.copyOf(nodes, c), Arrays.copyOf(memberTypes, c),
+                currentUser);
     }
 
     void readVersion() {
-        long version = readUnsignedNumberAbsolute();
-        if (version == 0) {
+        currentVersion = 0;
+        currentTimestamp = 0;
+        currentChangeset = 0;
+
+        currentVersion = (int) readUnsignedNumberAbsolute();
+        if (currentVersion == 0) {
             return;
         }
-        long timestamp = readSignedNumber(deltaTimestamp);
-        if (timestamp == 0) {
+        currentTimestamp = readSignedNumber(deltaTimestamp);
+        if (currentTimestamp == 0) {
             return;
         }
-        long changeset = readSignedNumber(deltaChangeset);
-        readUidUserPair();
+        currentChangeset = readSignedNumber(deltaChangeset);
+
+        // read uid user pair
+        long v = readUnsignedNumberAbsolute();
+        int pairPos;
+        if (v != 0) {
+            // refer to string pair
+            pairPos = (int) (stringPairPos - v);
+            if (pairPos < 0) {
+                pairPos += stringPairPositions.length;
+            }
+        } else {
+            pairPos = stringPairPos;
+            storeStringPair(stringPairPos);
+            if (stringPairFirstSizes[stringPairPos] + stringPairSecondSizes[stringPairPos] <= 250) {
+                // store for future
+                stringPairPos++;
+                if (stringPairPos >= stringPairPositions.length) {
+                    stringPairPos -= stringPairPositions.length;
+                }
+            }
+        }
+        currentUser = getString(stringPairPositions[pairPos] + stringPairFirstSizes[pairPos] + 1,
+                stringPairSecondSizes[pairPos]);
     }
 
     /**
@@ -300,22 +333,6 @@ public class O5MDriver {
         delta.value = result;
 
         return result;
-    }
-
-    void readUidUserPair() {
-        long v = readUnsignedNumberAbsolute();
-        if (v != 0) {
-            // refer to string pair
-        } else {
-            storeStringPair(stringPairPos);
-            if (stringPairFirstSizes[stringPairPos] + stringPairSecondSizes[stringPairPos] <= 250) {
-                // store for future
-                stringPairPos++;
-                if (stringPairPos >= stringPairPositions.length) {
-                    stringPairPos -= stringPairPositions.length;
-                }
-            }
-        }
     }
 
     byte readMemberInfo(int i) {

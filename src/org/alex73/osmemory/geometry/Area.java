@@ -71,6 +71,9 @@ public class Area {
 
     static Geometry way2poly(MemoryStorage storage, IOsmWay way) {
         long[] nodeIds = way.getNodeIds();
+        if (nodeIds[0] != nodeIds[nodeIds.length - 1]) {
+            throw new RuntimeException("Impossible to create area from non-closed way #" + way.getId());
+        }
 
         Coordinate[] points = new Coordinate[nodeIds.length];
         for (int i = 0; i < points.length; i++) {
@@ -80,7 +83,15 @@ public class Area {
             }
             points[i] = GeometryHelper.coord(node.getLongitude(), node.getLatitude());
         }
+
         try {
+            LineString line = GeometryHelper.createLine(points);
+            if (!line.isValid()) {
+                throw new Exception("not valid line");
+            }
+            if (!line.isSimple()) {
+                throw new Exception("self-intersected");
+            }
             return GeometryHelper.createPolygon(points);
         } catch (Throwable ex) {
             throw new RuntimeException("Impossible to create area from way #" + way.getId() + ": "

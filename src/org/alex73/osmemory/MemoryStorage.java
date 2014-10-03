@@ -49,6 +49,7 @@ public class MemoryStorage {
 
     private final StringPack tagsPack = new StringPack();
     private final StringPack relationRolesPack = new StringPack();
+    private final StringPack usersPack = new StringPack();
 
     private long loadingStartTime, loadingFinishTime;
 
@@ -102,6 +103,10 @@ public class MemoryStorage {
 
     public StringPack getRelationRolesPack() {
         return relationRolesPack;
+    }
+
+    public StringPack getUsersPack() {
+        return usersPack;
     }
 
     private static <T extends IOsmObject> T getById(List<T> en, long id) {
@@ -177,6 +182,7 @@ public class MemoryStorage {
         System.out.println("Relations count    : " + f.format(relations.size()));
         System.out.println("Tags count         : " + f.format(tagsPack.tagCodes.size()));
         System.out.println("RelRoles count     : " + f.format(relationRolesPack.tagCodes.size()));
+        System.out.println("Users count        : " + f.format(usersPack.tagCodes.size()));
     }
 
     /**

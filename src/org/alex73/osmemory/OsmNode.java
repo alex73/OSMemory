@@ -30,8 +30,8 @@ public class OsmNode extends OsmBase implements IOsmNode {
      */
     private final int lat, lon;
 
-    public OsmNode(long id, int tagsCount, int lat, int lon) {
-        super(id, tagsCount);
+    public OsmNode(long id, int tagsCount, int lat, int lon, short user) {
+        super(id, tagsCount, user);
         this.lat = lat;
         this.lon = lon;
     }

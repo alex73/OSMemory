@@ -44,7 +44,7 @@ Usually validators iterate by some set of object. It can be some tag-specific ob
     // this code prints names of all cities
     storage.byTag("place", o -> System.out.println(o.getTag("name"));
 
-allHasTag() function is very fast operation. If you can filter your object by having some tag, processing will be faster.
+byTag() function is very fast operation. If you can filter your object by having some tag, processing will be faster.
 
 How to check area
 -----------------

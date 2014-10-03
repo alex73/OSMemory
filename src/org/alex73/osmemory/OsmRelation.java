@@ -27,15 +27,15 @@ public class OsmRelation extends OsmBase implements IOsmRelation {
     final byte memberTypes[];
     final short memberRoles[];
 
-    public OsmRelation(long id, int tagsCount, int memberCount) {
-        super(id, tagsCount);
+    public OsmRelation(long id, int tagsCount, int memberCount, short user) {
+        super(id, tagsCount, user);
         memberIDs = new long[memberCount];
         memberTypes = new byte[memberCount];
         memberRoles = new short[memberCount];
     }
 
-    public OsmRelation(long id, int tagsCount, long[] memberIDs, byte[] memberTypes) {
-        super(id, tagsCount);
+    public OsmRelation(long id, int tagsCount, long[] memberIDs, byte[] memberTypes, short user) {
+        super(id, tagsCount, user);
         this.memberIDs = memberIDs;
         this.memberTypes = memberTypes;
         memberRoles = new short[memberIDs.length];

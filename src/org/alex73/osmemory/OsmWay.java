@@ -25,8 +25,8 @@ package org.alex73.osmemory;
 public class OsmWay extends OsmBase implements IOsmWay {
     private final long[] nodeIds;
 
-    public OsmWay(long id, int tagsCount, long[] nodeIds) {
-        super(id, tagsCount);
+    public OsmWay(long id, int tagsCount, long[] nodeIds, short user) {
+        super(id, tagsCount, user);
         this.nodeIds = nodeIds;
     }
 

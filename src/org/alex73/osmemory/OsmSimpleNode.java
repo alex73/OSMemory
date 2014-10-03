@@ -28,6 +28,7 @@ import java.util.Map;
  */
 public class OsmSimpleNode implements IOsmNode {
 
+    private final static short[] EMPTY_SHORT_LIST = new short[0];
     private final long id;
 
     /**
@@ -77,6 +78,11 @@ public class OsmSimpleNode implements IOsmNode {
     }
 
     @Override
+    public short[] getTags() {
+        return EMPTY_SHORT_LIST;
+    }
+
+    @Override
     public String getTag(short tagKey) {
         return null;
     }
@@ -114,5 +120,15 @@ public class OsmSimpleNode implements IOsmNode {
     @Override
     public String getObjectCode() {
         return IOsmObject.getNodeCode(id);
+    }
+
+    @Override
+    public short getUser() {
+        return -1;
+    }
+
+    @Override
+    public String getUser(MemoryStorage storage) {
+        return null;
     }
 }

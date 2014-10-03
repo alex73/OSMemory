@@ -58,7 +58,7 @@ public class O5MReader extends BaseReader {
     /**
      * Add nodes inside specified crop box.
      */
-    void createNode(O5MDriver driver, long id, int lat, int lon) {
+    void createNode(O5MDriver driver, long id, int lat, int lon, String user) {
         if (lat > 900000000 || lat < -900000000) {
             throw new RuntimeException("Wrong value for latitude: " + lat);
         }
@@ -71,7 +71,8 @@ public class O5MReader extends BaseReader {
         }
 
         if (driver.getObjectTagsCount() > 0) {
-            OsmNode result = new OsmNode(id, driver.getObjectTagsCount(), lat, lon);
+            short userCode = storage.getUsersPack().getTagCode(user);
+            OsmNode result = new OsmNode(id, driver.getObjectTagsCount(), lat, lon, userCode);
             applyTags(driver, result);
             storage.nodes.add(result);
         } else {
@@ -94,8 +95,9 @@ public class O5MReader extends BaseReader {
     /**
      * Add ways that contains known nodes, i.e. inside specified crop box.
      */
-    void createWay(O5MDriver driver, long id, long[] nodes) {
-        OsmWay result = new OsmWay(id, driver.getObjectTagsCount(), nodes);
+    void createWay(O5MDriver driver, long id, long[] nodes, String user) {
+        short userCode = storage.getUsersPack().getTagCode(user);
+        OsmWay result = new OsmWay(id, driver.getObjectTagsCount(), nodes, userCode);
         boolean inside = false;
         for (int i = 0; i < nodes.length; i++) {
             if (storage.getNodeById(nodes[i]) != null) {
@@ -112,8 +114,10 @@ public class O5MReader extends BaseReader {
     /**
      * Add all relations.
      */
-    void createRelation(O5MDriver driver, long id, long[] memberIds, byte[] memberTypes) {
-        OsmRelation result = new OsmRelation(id, driver.getObjectTagsCount(), memberIds, memberTypes);
+    void createRelation(O5MDriver driver, long id, long[] memberIds, byte[] memberTypes, String user) {
+        short userCode = storage.getUsersPack().getTagCode(user);
+        OsmRelation result = new OsmRelation(id, driver.getObjectTagsCount(), memberIds, memberTypes,
+                userCode);
         for (int i = 0; i < result.memberRoles.length; i++) {
             result.memberRoles[i] = storage.getRelationRolesPack().getTagCode(driver.getMemberRoleString(i));
         }
