@@ -46,6 +46,21 @@ public class BaseReader {
         }
     }
 
+    protected BaseReader(MemoryStorage storage, Envelope cropBox) {
+        this.storage = storage;
+        if (cropBox != null) {
+            minx = (int) (cropBox.getMinX() / OsmNode.DIVIDER) - 1;
+            maxx = (int) (cropBox.getMaxX() / OsmNode.DIVIDER) + 1;
+            miny = (int) (cropBox.getMinY() / OsmNode.DIVIDER) - 1;
+            maxy = (int) (cropBox.getMaxY() / OsmNode.DIVIDER) + 1;
+        } else {
+            minx = Integer.MIN_VALUE;
+            maxx = Integer.MAX_VALUE;
+            miny = Integer.MIN_VALUE;
+            maxy = Integer.MAX_VALUE;
+        }
+    }
+
     /**
      * Check if node inside crop box.
      */

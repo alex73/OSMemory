@@ -20,7 +20,9 @@
 package org.alex73.osmemory.geometry;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.alex73.osmemory.IOsmNode;
 import org.alex73.osmemory.IOsmObject;
@@ -38,25 +40,28 @@ import com.vividsolutions.jts.operation.polygonize.Polygonizer;
  * Representation of polygon.
  */
 public class Area {
-    protected final Geometry geom;
+    // Area's JTS geometry
+    private final Geometry geom;
+    // Area's border points for check 'isInBorder'
+    private final Set<Long> borderNodes = new HashSet<>();
 
     public Area(Geometry geom) {
         this.geom = geom;
+    }
+
+    public Area(MemoryStorage storage, IOsmObject obj) {
+        geom = osm2poly(storage, obj);
     }
 
     public Geometry getGeometry() {
         return geom;
     }
 
-    public static Area fromWKT(String wkt) throws Exception {
-        return new Area(GeometryHelper.fromWkt(wkt));
+    public Set<Long> getBorderNodes() {
+        return borderNodes;
     }
 
-    public static Area fromOSM(MemoryStorage storage, IOsmObject obj) {
-        return new Area(osm2poly(storage, obj));
-    }
-
-    static Geometry osm2poly(MemoryStorage storage, IOsmObject obj) {
+    Geometry osm2poly(MemoryStorage storage, IOsmObject obj) {
         switch (obj.getType()) {
         case IOsmObject.TYPE_NODE:
             throw new RuntimeException("Node can't be area");
@@ -69,7 +74,7 @@ public class Area {
         }
     }
 
-    static Geometry way2poly(MemoryStorage storage, IOsmWay way) {
+    Geometry way2poly(MemoryStorage storage, IOsmWay way) {
         long[] nodeIds = way.getNodeIds();
         if (nodeIds[0] != nodeIds[nodeIds.length - 1]) {
             throw new RuntimeException("Impossible to create area from non-closed way #" + way.getId());
@@ -81,6 +86,7 @@ public class Area {
             if (node == null) {
                 throw new RuntimeException("Node #" + nodeIds[i] + " not exist for way #" + way.getId());
             }
+            borderNodes.add(nodeIds[i]);
             points[i] = GeometryHelper.coord(node.getLongitude(), node.getLatitude());
         }
 
@@ -88,6 +94,9 @@ public class Area {
             LineString line = GeometryHelper.createLine(points);
             if (!line.isValid()) {
                 throw new Exception("not valid line");
+            }
+            if (!line.isClosed()) {
+                throw new Exception("is not closed");
             }
             if (!line.isSimple()) {
                 throw new Exception("self-intersected");
@@ -99,7 +108,7 @@ public class Area {
         }
     }
 
-    static LineString way2line(MemoryStorage storage, IOsmWay way) {
+    LineString way2line(MemoryStorage storage, IOsmWay way) {
         long[] nodeIds = way.getNodeIds();
 
         Coordinate[] points = new Coordinate[nodeIds.length];
@@ -108,12 +117,13 @@ public class Area {
             if (node == null) {
                 throw new RuntimeException("Node #" + nodeIds[i] + " not exist for way #" + way.getId());
             }
+            borderNodes.add(nodeIds[i]);
             points[i] = GeometryHelper.coord(node.getLongitude(), node.getLatitude());
         }
         return GeometryHelper.createLine(points);
     }
 
-    static Geometry relation2poly(MemoryStorage storage, IOsmRelation relation) {
+    Geometry relation2poly(MemoryStorage storage, IOsmRelation relation) {
         List<LineString> outer = new ArrayList<>();
         List<LineString> inner = new ArrayList<>();
         Geometry border = null;

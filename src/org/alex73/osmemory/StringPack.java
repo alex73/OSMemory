@@ -21,6 +21,7 @@ package org.alex73.osmemory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Class for store some frequently used strings. Each string has own short id, that used in object instead
@@ -50,5 +51,9 @@ public class StringPack {
 
     public String getTagName(short tagKey) {
         return tagNames.get(tagKey);
+    }
+
+    public Set<String> getTagNames() {
+        return tagCodes.keySet();
     }
 }

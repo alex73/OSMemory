@@ -42,6 +42,10 @@ public class O5MReader extends BaseReader {
         super(cropBox);
     }
 
+    public O5MReader(MemoryStorage storage, double minLat, double maxLat, double minLon, double maxLon) {
+        super(storage, new Envelope(minLon, maxLon, minLat, maxLat));
+    }
+
     public MemoryStorage read(File file) throws Exception {
         new O5MDriver(this).read(file);
         storage.finishLoading();

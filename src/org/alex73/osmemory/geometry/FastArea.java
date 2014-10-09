@@ -46,6 +46,11 @@ import com.vividsolutions.jts.geom.Polygon;
  * Keep in mind, that only nodes inside polygon will be checked. That means, if you have way from upper left
  * corner into bottom right corner, i.e. overlaps polygon, but there is no nodes of way inside polygon, then
  * this way will be treated as 'not contains'.
+ * 
+ * 'Area contains node' means node should be inside area, but not on the border. That means border's nodes are
+ * not contained in area.
+ * 
+ * 'Area covers node' means node should be inside area or on the border.
  */
 public class FastArea {
     private static final int PARTS_COUNT_BYXY = 20;
@@ -82,6 +87,10 @@ public class FastArea {
         }
     }
 
+    public Geometry getGeometry() {
+        return polygon;
+    }
+
     Geometry calcCache(int ix, int iy) {
         int ulx = minx + ix * stepx;
         int uly = miny + iy * stepy;
@@ -96,7 +105,7 @@ public class FastArea {
         } else if (intersection.equalsExact(p)) {
             return GEO_FULL;
         } else {
-            return intersection;// .union(intersection.buffer(0.001));
+            return intersection;
         }
     }
 
@@ -116,19 +125,20 @@ public class FastArea {
         return true;
     }
 
-    public boolean contains(IOsmObject obj) {
-        if (obj instanceof IOsmNode) {
-            return containsNode((IOsmNode) obj);
-        } else if (obj instanceof OsmWay) {
-            return containsWay((IOsmWay) obj);
-        } else if (obj instanceof OsmRelation) {
-            return containsRelation((IOsmRelation) obj);
-        } else {
-            throw new RuntimeException("Unknown object type: " + obj.getObjectCode());
+    public boolean covers(IOsmObject obj) {
+        switch (obj.getType()) {
+        case IOsmObject.TYPE_NODE:
+            return coversNode((IOsmNode) obj);
+        case IOsmObject.TYPE_WAY:
+            return coversWay((IOsmWay) obj);
+        case IOsmObject.TYPE_RELATION:
+            return coversRelation((IOsmRelation) obj);
+        default:
+            throw new RuntimeException("Unknown object type");
         }
     }
 
-    public boolean containsNode(IOsmNode node) {
+    protected boolean coversNode(IOsmNode node) {
         int x = node.getLon();
         int y = node.getLat();
         if (x < minx || x >= maxx || y < miny || y >= maxy) {
@@ -149,8 +159,8 @@ public class FastArea {
             Point p = GeometryHelper.createPoint(node.getLongitude(), node.getLatitude());
             if (cached instanceof GeometryCollection) {
                 // cached can be collection of point and polygon, but covers doesn't work with collection
-                GeometryCollection cachedCollection=(GeometryCollection)cached;
-                for(int i=0;i<cachedCollection.getNumGeometries();i++) {
+                GeometryCollection cachedCollection = (GeometryCollection) cached;
+                for (int i = 0; i < cachedCollection.getNumGeometries(); i++) {
                     if (cachedCollection.getGeometryN(i).contains(p)) {
                         return true;
                     }
@@ -162,22 +172,22 @@ public class FastArea {
         }
     }
 
-    public boolean containsWay(IOsmWay way) {
+    protected boolean coversWay(IOsmWay way) {
         long[] nodeIds = way.getNodeIds();
         for (int i = 0; i < nodeIds.length; i++) {
             long nid = nodeIds[i];
             IOsmNode n = storage.getNodeById(nid);
-            if (n != null && containsNode(n)) {
+            if (n != null && coversNode(n)) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean containsRelation(IOsmRelation rel) {
+    protected boolean coversRelation(IOsmRelation rel) {
         for (int i = 0; i < rel.getMembersCount(); i++) {
             IOsmObject o = rel.getMemberObject(storage, i);
-            if (o != null && contains(o)) {
+            if (o != null && covers(o)) {
                 return true;
             }
         }

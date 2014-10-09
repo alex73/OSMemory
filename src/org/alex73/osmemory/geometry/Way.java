@@ -105,13 +105,7 @@ public class Way {
         return false;
     }
 
-    public Geometry getLineGeometry(MemoryStorage storage, IOsmWay way) {
-        if (!isLine()) {
-            throw new RuntimeException("Way #" + way.getId() + " is not a line");
-        }
-        if (isClosed()) {
-            throw new RuntimeException("Way #" + way.getId() + " is closed");
-        }
+    public Geometry getLineGeometry() {
         long[] nodeIds = way.getNodeIds();
 
         Coordinate[] points = new Coordinate[nodeIds.length];
