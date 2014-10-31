@@ -19,14 +19,14 @@
 
 package org.alex73.osmemory.geometry;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.alex73.osmemory.IOsmNode;
 import org.alex73.osmemory.IOsmObject;
 import org.alex73.osmemory.IOsmRelation;
 import org.alex73.osmemory.IOsmWay;
 import org.alex73.osmemory.MemoryStorage;
-import org.alex73.osmemory.OsmNode;
-import org.alex73.osmemory.OsmRelation;
-import org.alex73.osmemory.OsmWay;
 
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
@@ -70,10 +70,10 @@ public class FastArea {
         this.storage = storage;
         this.polygon = polygon;
         Envelope bo = polygon.getEnvelopeInternal();
-        minx = (int) (bo.getMinX() / OsmNode.DIVIDER) - 1;
-        maxx = (int) (bo.getMaxX() / OsmNode.DIVIDER) + 1;
-        miny = (int) (bo.getMinY() / OsmNode.DIVIDER) - 1;
-        maxy = (int) (bo.getMaxY() / OsmNode.DIVIDER) + 1;
+        minx = (int) (bo.getMinX() / IOsmNode.DIVIDER) - 1;
+        maxx = (int) (bo.getMaxX() / IOsmNode.DIVIDER) + 1;
+        miny = (int) (bo.getMinY() / IOsmNode.DIVIDER) - 1;
+        maxy = (int) (bo.getMaxY() / IOsmNode.DIVIDER) + 1;
 
         // can be more than 4-byte signed integer
         long dx = ((long) maxx) - ((long) minx);
@@ -94,10 +94,10 @@ public class FastArea {
     Geometry calcCache(int ix, int iy) {
         int ulx = minx + ix * stepx;
         int uly = miny + iy * stepy;
-        double mix = ulx * OsmNode.DIVIDER;
-        double max = (ulx + stepx - 1) * OsmNode.DIVIDER;
-        double miy = uly * OsmNode.DIVIDER;
-        double may = (uly + stepy - 1) * OsmNode.DIVIDER;
+        double mix = ulx * IOsmNode.DIVIDER;
+        double max = (ulx + stepx - 1) * IOsmNode.DIVIDER;
+        double miy = uly * IOsmNode.DIVIDER;
+        double may = (uly + stepy - 1) * IOsmNode.DIVIDER;
         Polygon p = GeometryHelper.createBoxPolygon(mix, max, miy, may);
         Geometry intersection = polygon.intersection(p);
         if (intersection.isEmpty()) {
@@ -109,17 +109,17 @@ public class FastArea {
         }
     }
 
-    public boolean interceptBox(Envelope box) {
-        if (maxx < box.getMinX() / OsmNode.DIVIDER) {
+    public boolean mayCovers(Envelope box) {
+        if (maxx < box.getMinX() / IOsmNode.DIVIDER) {
             return false;
         }
-        if (minx > box.getMaxX() / OsmNode.DIVIDER) {
+        if (minx > box.getMaxX() / IOsmNode.DIVIDER) {
             return false;
         }
-        if (maxy < box.getMinY() / OsmNode.DIVIDER) {
+        if (maxy < box.getMinY() / IOsmNode.DIVIDER) {
             return false;
         }
-        if (miny > box.getMaxY() / OsmNode.DIVIDER) {
+        if (miny > box.getMaxY() / IOsmNode.DIVIDER) {
             return false;
         }
         return true;
@@ -132,7 +132,7 @@ public class FastArea {
         case IOsmObject.TYPE_WAY:
             return coversWay((IOsmWay) obj);
         case IOsmObject.TYPE_RELATION:
-            return coversRelation((IOsmRelation) obj);
+            return coversRelation((IOsmRelation) obj, new HashSet<>());
         default:
             throw new RuntimeException("Unknown object type");
         }
@@ -184,10 +184,21 @@ public class FastArea {
         return false;
     }
 
-    protected boolean coversRelation(IOsmRelation rel) {
+    protected boolean coversRelation(IOsmRelation rel, Set<String> processedRelations) {
+        processedRelations.add(rel.getObjectCode());
         for (int i = 0; i < rel.getMembersCount(); i++) {
             IOsmObject o = rel.getMemberObject(storage, i);
-            if (o != null && covers(o)) {
+            if (o == null) {
+                continue;
+            }
+            if (o.isRelation()) {
+                if (processedRelations.contains(o.getObjectCode())) {
+                    // check against circular relations
+                    continue;
+                } else if (coversRelation((IOsmRelation) o, processedRelations)) {
+                    return true;
+                }
+            } else if (covers(o)) {
                 return true;
             }
         }

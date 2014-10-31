@@ -23,7 +23,6 @@ package org.alex73.osmemory;
  * Node object representation.
  */
 public class OsmNode extends OsmBase implements IOsmNode {
-    public static final double DIVIDER = 0.0000001;
     /**
      * Latitude and longitude stored as integer, like in o5m. It allows to minimize memory and increase
      * performance in some cases. All coordinates in OSM stored with 7 digits after point precision.
