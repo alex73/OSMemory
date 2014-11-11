@@ -32,7 +32,6 @@ import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
 
 /**
  * Polygon.contains() call performance optimization. It can be used for checks like "if node inside country",
@@ -52,61 +51,16 @@ import com.vividsolutions.jts.geom.Polygon;
  * 
  * 'Area covers node' means node should be inside area or on the border.
  */
-public class FastArea {
-    private static final int PARTS_COUNT_BYXY = 20;
-
-    private final Geometry GEO_EMPTY = GeometryHelper.createPoint(0, 0);
-    private final Geometry GEO_FULL = GeometryHelper.createPoint(0, 0);
-
-    private final int minx, maxx, miny, maxy, stepx, stepy;
+public class FastArea extends Fast {
     private final MemoryStorage storage;
-    private final Geometry polygon;
-    private final Geometry[][] cachedGeo;
 
     public FastArea(Geometry polygon, MemoryStorage storage) {
-        if (polygon == null || storage == null) {
+        super(polygon);
+        if (storage == null) {
             throw new IllegalArgumentException();
         }
+
         this.storage = storage;
-        this.polygon = polygon;
-        Envelope bo = polygon.getEnvelopeInternal();
-        minx = (int) (bo.getMinX() / IOsmNode.DIVIDER) - 1;
-        maxx = (int) (bo.getMaxX() / IOsmNode.DIVIDER) + 1;
-        miny = (int) (bo.getMinY() / IOsmNode.DIVIDER) - 1;
-        maxy = (int) (bo.getMaxY() / IOsmNode.DIVIDER) + 1;
-
-        // can be more than 4-byte signed integer
-        long dx = ((long) maxx) - ((long) minx);
-        long dy = ((long) maxy) - ((long) miny);
-
-        stepx = (int) (dx / PARTS_COUNT_BYXY + 1);
-        stepy = (int) (dy / PARTS_COUNT_BYXY + 1);
-        cachedGeo = new Geometry[PARTS_COUNT_BYXY][];
-        for (int i = 0; i < cachedGeo.length; i++) {
-            cachedGeo[i] = new Geometry[PARTS_COUNT_BYXY];
-        }
-    }
-
-    public Geometry getGeometry() {
-        return polygon;
-    }
-
-    Geometry calcCache(int ix, int iy) {
-        int ulx = minx + ix * stepx;
-        int uly = miny + iy * stepy;
-        double mix = ulx * IOsmNode.DIVIDER;
-        double max = (ulx + stepx - 1) * IOsmNode.DIVIDER;
-        double miy = uly * IOsmNode.DIVIDER;
-        double may = (uly + stepy - 1) * IOsmNode.DIVIDER;
-        Polygon p = GeometryHelper.createBoxPolygon(mix, max, miy, may);
-        Geometry intersection = polygon.intersection(p);
-        if (intersection.isEmpty()) {
-            return GEO_EMPTY;
-        } else if (intersection.equalsExact(p)) {
-            return GEO_FULL;
-        } else {
-            return intersection;
-        }
     }
 
     public boolean mayCovers(Envelope box) {
@@ -138,48 +92,78 @@ public class FastArea {
         }
     }
 
+    /**
+     * Return true if node should be used for covers tests. May be useful for check borders.
+     */
+    protected boolean isSkipped(IOsmNode node) {
+        return false;
+    }
+
     protected boolean coversNode(IOsmNode node) {
-        int x = node.getLon();
-        int y = node.getLat();
-        if (x < minx || x >= maxx || y < miny || y >= maxy) {
+        Cell c = getCellForPoint(node.getLat(), node.getLon());
+        if (c == null) {
             return false;
         }
-        int ix = (x - minx) / stepx;
-        int iy = (y - miny) / stepy;
-        Geometry cached = cachedGeo[ix][iy];
-        if (cached == null) {
-            cached = calcCache(ix, iy);
-            cachedGeo[ix][iy] = cached;
-        }
-        if (cached == GEO_EMPTY) {
+        if (c.isEmpty()) {
             return false;
-        } else if (cached == GEO_FULL) {
+        } else if (c.isFull()) {
             return true;
         } else {
-            Point p = GeometryHelper.createPoint(node.getLongitude(), node.getLatitude());
-            if (cached instanceof GeometryCollection) {
-                // cached can be collection of point and polygon, but covers doesn't work with collection
-                GeometryCollection cachedCollection = (GeometryCollection) cached;
-                for (int i = 0; i < cachedCollection.getNumGeometries(); i++) {
-                    if (cachedCollection.getGeometryN(i).contains(p)) {
-                        return true;
-                    }
+            return coversCellNode(c, node);
+        }
+    }
+
+    protected boolean coversCellNode(Cell c, IOsmNode node) {
+        Point p = GeometryHelper.createPoint(node.getLongitude(), node.getLatitude());
+        if (c.getGeom() instanceof GeometryCollection) {
+            // cached can be collection of point and polygon, but covers doesn't work with collection
+            GeometryCollection cachedCollection = (GeometryCollection) c.getGeom();
+            for (int i = 0; i < cachedCollection.getNumGeometries(); i++) {
+                if (cachedCollection.getGeometryN(i).contains(p)) {
+                    return true;
                 }
-                return false;
-            } else {
-                return cached.covers(p);
             }
+            return false;
+        } else {
+            return c.getGeom().covers(p);
         }
     }
 
     protected boolean coversWay(IOsmWay way) {
-        long[] nodeIds = way.getNodeIds();
-        for (int i = 0; i < nodeIds.length; i++) {
-            long nid = nodeIds[i];
-            IOsmNode n = storage.getNodeById(nid);
-            if (n != null && coversNode(n)) {
-                return true;
+        ExtendedWay ext = new ExtendedWay(way, storage);
+
+        // iterate by full cells first - it will be faster than check inside geometry
+        Boolean covers = ext.iterateNodes(new ExtendedWay.NodesIterator() {
+            public Boolean processNode(IOsmNode node) {
+                if (isSkipped(node)) {
+                    return null;
+                }
+                Cell c = getCellForPoint(node.getLat(), node.getLon());
+                if (c != null && c.isFull()) {
+                    return true;
+                }
+                return null;
             }
+        });
+        if (covers != null) {
+            return covers;
+        }
+
+        // iterate by geometries because there are no points inside full cells
+        covers = ext.iterateNodes(new ExtendedWay.NodesIterator() {
+            public Boolean processNode(IOsmNode node) {
+                if (isSkipped(node)) {
+                    return null;
+                }
+                Cell c = getCellForPoint(node.getLat(), node.getLon());
+                if (c != null && !c.isFull() && coversCellNode(c, node)) {
+                    return true;
+                }
+                return null;
+            }
+        });
+        if (covers != null) {
+            return covers;
         }
         return false;
     }
