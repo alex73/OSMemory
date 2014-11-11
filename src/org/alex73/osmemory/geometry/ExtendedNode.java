@@ -19,24 +19,29 @@
 
 package org.alex73.osmemory.geometry;
 
-import org.alex73.osmemory.IOsmObject;
-import org.alex73.osmemory.IOsmRelation;
-import org.alex73.osmemory.IOsmWay;
+import org.alex73.osmemory.IOsmNode;
 import org.alex73.osmemory.MemoryStorage;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.LineString;
 
 /**
- * Creates area geometry from way or relation.
+ * Class for cache some extended information about node.
  */
-public class Area {
-    public static Geometry fromObject(IOsmObject obj, MemoryStorage osm) {
-        if (obj.isWay()) {
-            return new ExtendedWay((IOsmWay) obj, osm).getArea();
-        } else if (obj.isRelation()) {
-            return new ExtendedRelation((IOsmRelation) obj, osm).getArea();
-        } else {
-            throw new RuntimeException("Area object must be way or relation");
-        }
+public class ExtendedNode {
+    private final IOsmNode node;
+    private final MemoryStorage storage;
+
+    private Envelope boundingBox;
+    private boolean allPointsDefined;
+    private Coordinate[] points;
+    private LineString line;
+    private Geometry area;
+
+    public ExtendedNode(IOsmNode node, MemoryStorage storage) {
+        this.node = node;
+        this.storage = storage;
     }
 }

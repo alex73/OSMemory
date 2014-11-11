@@ -64,13 +64,27 @@ public class GeometryHelper {
         return GEOM.createLineString(coords);
     }
 
+    public static LineString createLine(List<Coordinate> coords) {
+        return GEOM.createLineString(coords.toArray(new Coordinate[coords.size()]));
+    }
+
     public static Geometry union(List<Geometry> list) {
         Geometry[] geoms = new Geometry[list.size()];
         list.toArray(geoms);
         return GEOM.createGeometryCollection(geoms).union();
     }
 
+    public static Geometry multipolygon(List<Polygon> list) {
+        Polygon[] pols = new Polygon[list.size()];
+        list.toArray(pols);
+        return GEOM.createMultiPolygon(pols);
+    }
+
     public static Geometry substract(Geometry g1, Geometry g2) {
         return g1.difference(g2);
+    }
+
+    public static Geometry emptyCollection() {
+        return GEOM.createGeometryCollection(null);
     }
 }

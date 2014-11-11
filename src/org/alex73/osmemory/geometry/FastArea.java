@@ -63,6 +63,10 @@ public class FastArea extends Fast {
         this.storage = storage;
     }
 
+    public FastArea(IOsmObject areaObject, MemoryStorage storage) {
+        this(Area.fromObject(areaObject, storage), storage);
+    }
+
     public boolean mayCovers(Envelope box) {
         if (maxx < box.getMinX() / IOsmNode.DIVIDER) {
             return false;

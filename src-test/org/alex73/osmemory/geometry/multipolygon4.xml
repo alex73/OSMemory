@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm>
+    <node id="1" lat="6" lon="1" />
+    <node id="2" lat="11" lon="4" />
+    <node id="3" lat="9" lon="8" />
+    <node id="4" lat="5" lon="9" />
+    <node id="5" lat="2" lon="4" />
+
+    <node id="21" lat="9" lon="9" />
+    <node id="22" lat="11" lon="11" />
+    <node id="23" lat="8" lon="15" />
+    <node id="24" lat="2" lon="12" />
+    <node id="25" lat="5" lon="10" />
+
+    <way id="1">
+        <nd ref="1" />
+        <nd ref="2" />
+        <nd ref="3" />
+        <nd ref="4" />
+        <nd ref="5" />
+        <nd ref="1" />
+    </way>
+    <way id="2">
+        <nd ref="21" />
+        <nd ref="22" />
+        <nd ref="23" />
+        <nd ref="24" />
+        <nd ref="25" />
+        <nd ref="21" />
+    </way>
+
+    <relation id="1">
+        <tag k="type" v="multipolygon" />
+        <member type="way" id="1" role="outer" />
+        <member type="way" id="2" role="outer" />
+    </relation>
+</osm>
