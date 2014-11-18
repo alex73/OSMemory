@@ -187,8 +187,7 @@ public class ExtendedRelation {
         LineString s = GeometryHelper.createLine(tail);
         if (!s.isClosed()) {
             throw new RuntimeException("Non-closed line starts from " + tail.get(0) + " ends to "
-                    + tail.get(tail.size() - 1) + ": there are no candidates in " + lines
-                    + ", already created line: " + tail);
+                    + tail.get(tail.size() - 1));
         }
         if (!s.isSimple()) {
             throw new RuntimeException("Self-intersected line: " + s);
