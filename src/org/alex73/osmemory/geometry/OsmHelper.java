@@ -19,6 +19,7 @@
 
 package org.alex73.osmemory.geometry;
 
+import org.alex73.osmemory.IOsmNode;
 import org.alex73.osmemory.IOsmObject;
 import org.alex73.osmemory.IOsmRelation;
 import org.alex73.osmemory.IOsmWay;
@@ -29,14 +30,27 @@ import com.vividsolutions.jts.geom.Geometry;
 /**
  * Creates area geometry from way or relation.
  */
-public class Area {
-    public static Geometry fromObject(IOsmObject obj, MemoryStorage osm) {
+public class OsmHelper {
+    public static Geometry areaFromObject(IOsmObject obj, MemoryStorage osm) {
         if (obj.isWay()) {
             return new ExtendedWay((IOsmWay) obj, osm).getArea();
         } else if (obj.isRelation()) {
             return new ExtendedRelation((IOsmRelation) obj, osm).getArea();
         } else {
             throw new RuntimeException("Area object must be way or relation");
+        }
+    }
+
+    public static IExtendedObject extendedFromObject(IOsmObject obj, MemoryStorage osm) {
+        switch (obj.getType()) {
+        case IOsmObject.TYPE_NODE:
+            return new ExtendedNode((IOsmNode) obj, osm);
+        case IOsmObject.TYPE_WAY:
+            return new ExtendedWay((IOsmWay) obj, osm);
+        case IOsmObject.TYPE_RELATION:
+            return new ExtendedRelation((IOsmRelation) obj, osm);
+        default:
+            throw new RuntimeException("Unknown object type");
         }
     }
 }

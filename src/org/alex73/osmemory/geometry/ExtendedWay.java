@@ -20,6 +20,7 @@
 package org.alex73.osmemory.geometry;
 
 import org.alex73.osmemory.IOsmNode;
+import org.alex73.osmemory.IOsmObject;
 import org.alex73.osmemory.IOsmWay;
 import org.alex73.osmemory.MemoryStorage;
 
@@ -31,7 +32,7 @@ import com.vividsolutions.jts.geom.LineString;
 /**
  * Class for cache some extended information about way, like boundary, geometry, etc.
  */
-public class ExtendedWay {
+public class ExtendedWay implements IExtendedObject {
     private final IOsmWay way;
     private final MemoryStorage storage;
 
@@ -45,6 +46,11 @@ public class ExtendedWay {
     public ExtendedWay(IOsmWay way, MemoryStorage storage) {
         this.way = way;
         this.storage = storage;
+    }
+
+    @Override
+    public IOsmObject getObject() {
+        return way;
     }
 
     public Envelope getBoundingBox() {
@@ -151,9 +157,5 @@ public class ExtendedWay {
             }
         }
         return null;
-    }
-
-    public static abstract class NodesIterator {
-        abstract Boolean processNode(IOsmNode node);
     }
 }

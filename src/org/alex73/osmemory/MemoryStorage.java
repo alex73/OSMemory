@@ -217,6 +217,31 @@ public class MemoryStorage {
     }
 
     /**
+     * Process objects with specific tag.
+     */
+    public void byTag(String tagName, Consumer<IOsmObject> consumer) {
+        short tagKey = tagsPack.getTagCode(tagName);
+        for (int i = 0; i < nodes.size(); i++) {
+            IOsmNode n = nodes.get(i);
+            if (n.hasTag(tagKey)) {
+                consumer.accept(n);
+            }
+        }
+        for (int i = 0; i < ways.size(); i++) {
+            IOsmWay w = ways.get(i);
+            if (w.hasTag(tagKey)) {
+                consumer.accept(w);
+            }
+        }
+        for (int i = 0; i < relations.size(); i++) {
+            IOsmRelation r = relations.get(i);
+            if (r.hasTag(tagKey)) {
+                consumer.accept(r);
+            }
+        }
+    }
+
+    /**
      * Process all objects.
      */
     public void all(Predicate<IOsmObject> predicate, Consumer<IOsmObject> consumer) {

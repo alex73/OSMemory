@@ -41,7 +41,7 @@ import com.vividsolutions.jts.geom.Polygon;
 /**
  * Class for cache some extended information about relation, like boundary, geometry, etc.
  */
-public class ExtendedRelation {
+public class ExtendedRelation implements IExtendedObject {
     private final IOsmRelation relation;
     private final MemoryStorage storage;
 
@@ -55,6 +55,11 @@ public class ExtendedRelation {
     public ExtendedRelation(IOsmRelation relation, MemoryStorage storage) {
         this.relation = relation;
         this.storage = storage;
+    }
+
+    @Override
+    public IOsmObject getObject() {
+        return relation;
     }
 
     public Envelope getBoundingBox() {
@@ -240,7 +245,7 @@ public class ExtendedRelation {
         allPointsDefined = true;
         iterateNodes(new NodesIterator() {
             @Override
-            Boolean processNode(IOsmNode n) {
+            public Boolean processNode(IOsmNode n) {
                 if (n != null) {
                     boundingBox.expandToInclude(n.getLongitude(), n.getLatitude());
                 } else {
@@ -272,6 +277,9 @@ public class ExtendedRelation {
             Set<Long> processedRelations) {
         for (int i = 0; i < relation.getMembersCount(); i++) {
             IOsmObject m = relation.getMemberObject(storage, i);
+            if (m == null) {
+                continue;
+            }
             Boolean r;
             switch (relation.getMemberType(i)) {
             case IOsmObject.TYPE_NODE:
@@ -295,10 +303,6 @@ public class ExtendedRelation {
             }
         }
         return null;
-    }
-
-    public static abstract class NodesIterator {
-        abstract Boolean processNode(IOsmNode node);
     }
 
     List<LineString> getAs(boolean inner, List<Line> lines) {

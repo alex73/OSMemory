@@ -21,44 +21,20 @@ package org.alex73.osmemory.geometry;
 
 import org.alex73.osmemory.IOsmNode;
 import org.alex73.osmemory.IOsmObject;
-import org.alex73.osmemory.MemoryStorage;
 
 import com.vividsolutions.jts.geom.Envelope;
 
 /**
- * Class for cache some extended information about node.
+ * Interface for all External... that have bounds.
  */
-public class ExtendedNode implements IExtendedObject {
-    private final IOsmNode node;
-    private final MemoryStorage storage;
+public interface IExtendedObject {
+    Envelope getBoundingBox();
 
-    private Envelope boundingBox;
+    IOsmObject getObject();
 
-    public ExtendedNode(IOsmNode node, MemoryStorage storage) {
-        this.node = node;
-        this.storage = storage;
-    }
+    Boolean iterateNodes(NodesIterator iterator);
 
-    @Override
-    public IOsmObject getObject() {
-        return node;
-    }
-
-    public Envelope getBoundingBox() {
-        checkProcessed();
-        return boundingBox;
-    }
-
-    protected void checkProcessed() {
-        if (boundingBox != null) {
-            return; // already loaded
-        }
-        boundingBox = new Envelope();
-        boundingBox.expandToInclude(node.getLongitude(), node.getLatitude());
-    }
-
-    @Override
-    public Boolean iterateNodes(NodesIterator iterator) {
-        return iterator.processNode(node);
+    interface NodesIterator {
+        Boolean processNode(IOsmNode node);
     }
 }

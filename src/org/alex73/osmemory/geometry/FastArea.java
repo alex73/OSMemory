@@ -64,7 +64,7 @@ public class FastArea extends Fast {
     }
 
     public FastArea(IOsmObject areaObject, MemoryStorage storage) {
-        this(Area.fromObject(areaObject, storage), storage);
+        this(OsmHelper.areaFromObject(areaObject, storage), storage);
     }
 
     public boolean mayCovers(Envelope box) {
@@ -94,6 +94,46 @@ public class FastArea extends Fast {
         default:
             throw new RuntimeException("Unknown object type");
         }
+    }
+
+    public boolean covers(IExtendedObject ext) {
+        if (!mayCovers(ext.getBoundingBox())) {
+            return false;
+        }
+        // iterate by full cells first - it will be faster than check inside geometry
+        Boolean covers = ext.iterateNodes(new ExtendedWay.NodesIterator() {
+            public Boolean processNode(IOsmNode node) {
+                if (isSkipped(node)) {
+                    return null;
+                }
+                Cell c = getCellForPoint(node.getLat(), node.getLon());
+                if (c != null && c.isFull()) {
+                    return true;
+                }
+                return null;
+            }
+        });
+        if (covers != null) {
+            return covers;
+        }
+
+        // iterate by geometries because there are no points inside full cells
+        covers = ext.iterateNodes(new ExtendedWay.NodesIterator() {
+            public Boolean processNode(IOsmNode node) {
+                if (isSkipped(node)) {
+                    return null;
+                }
+                Cell c = getCellForPoint(node.getLat(), node.getLon());
+                if (c != null && !c.isFull() && coversCellNode(c, node)) {
+                    return true;
+                }
+                return null;
+            }
+        });
+        if (covers != null) {
+            return covers;
+        }
+        return false;
     }
 
     /**
