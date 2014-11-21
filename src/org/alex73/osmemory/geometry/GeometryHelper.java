@@ -30,6 +30,7 @@ import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
+import com.vividsolutions.jts.io.WKTWriter;
 
 /**
  * Some geometry operations.
@@ -39,6 +40,10 @@ public class GeometryHelper {
 
     public static Geometry fromWkt(String wkt) throws ParseException {
         return new WKTReader(GEOM).read(wkt);
+    }
+
+    public static String toWkt(Geometry geom) {
+        return new WKTWriter().write(geom);
     }
 
     public static Point createPoint(double longitude, double latitude) {
