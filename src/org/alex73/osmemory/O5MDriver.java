@@ -98,6 +98,7 @@ public class O5MDriver {
     }
 
     public void read(File file) throws Exception {
+        handler.fileTimestamp(file.lastModified());
         try (RandomAccessFile aFile = new RandomAccessFile(file, "r")) {
             try (FileChannel inChannel = aFile.getChannel()) {
                 buffer = inChannel.map(FileChannel.MapMode.READ_ONLY, 0, file.length());
@@ -124,6 +125,7 @@ public class O5MDriver {
                         // or 0x04 0x6f 0x35 0x63 0x32 ("o5c2") for .o5m change files
                         break;
                     case MARK_DATASET_FILETIMESTAMP:
+                        readTimestamp();
                         break;
                     case MARK_DATASET_BOUNDINGBOX:
                         break;
@@ -144,6 +146,10 @@ public class O5MDriver {
                 }
             }
         }
+    }
+
+    void readTimestamp() {
+        handler.fileTimestamp(readSignedNumber(new DeltaCoder()) * 1000);
     }
 
     void readNode() {
@@ -444,6 +450,10 @@ public class O5MDriver {
 
     String getMemberRoleString(int pos) {
         return getString(memberRolePositions[pos], memberRoleSizes[pos]);
+    }
+
+    public long getCurrentChangeset() {
+        return currentChangeset;
     }
 
     String getString(int pos, int len) {

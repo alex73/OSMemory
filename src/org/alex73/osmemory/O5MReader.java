@@ -60,6 +60,13 @@ public class O5MReader extends BaseReader {
     }
 
     /**
+     * @param timestamp
+     *            The Unit is seconds since Jan 01 1970.
+     */
+    protected void fileTimestamp(long timestamp) {
+    }
+
+    /**
      * Add nodes inside specified crop box.
      */
     void createNode(O5MDriver driver, long id, int lat, int lon, String user) {
