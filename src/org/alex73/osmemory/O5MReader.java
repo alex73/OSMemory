@@ -52,7 +52,7 @@ public class O5MReader extends BaseReader {
         return storage;
     }
 
-    void applyTags(O5MDriver driver, OsmBase obj) {
+    protected void applyTags(O5MDriver driver, OsmBase obj) {
         for (int i = 0; i < driver.getObjectTagsCount(); i++) {
             obj.tagKeys[i] = storage.getTagsPack().getTagCode(driver.getObjectTagKeyString(i));
             obj.tagValues[i] = driver.getObjectTagValueBytes(i);
@@ -69,7 +69,7 @@ public class O5MReader extends BaseReader {
     /**
      * Add nodes inside specified crop box.
      */
-    void createNode(O5MDriver driver, long id, int lat, int lon, String user) {
+    protected void createNode(O5MDriver driver, long id, int lat, int lon, String user) {
         if (lat > 900000000 || lat < -900000000) {
             throw new RuntimeException("Wrong value for latitude: " + lat);
         }
@@ -106,7 +106,7 @@ public class O5MReader extends BaseReader {
     /**
      * Add ways that contains known nodes, i.e. inside specified crop box.
      */
-    void createWay(O5MDriver driver, long id, long[] nodes, String user) {
+    protected void createWay(O5MDriver driver, long id, long[] nodes, String user) {
         short userCode = storage.getUsersPack().getTagCode(user);
         OsmWay result = new OsmWay(id, driver.getObjectTagsCount(), nodes, userCode);
         boolean inside = false;
@@ -125,7 +125,7 @@ public class O5MReader extends BaseReader {
     /**
      * Add all relations.
      */
-    void createRelation(O5MDriver driver, long id, long[] memberIds, byte[] memberTypes, String user) {
+    protected void createRelation(O5MDriver driver, long id, long[] memberIds, byte[] memberTypes, String user) {
         short userCode = storage.getUsersPack().getTagCode(user);
         OsmRelation result = new OsmRelation(id, driver.getObjectTagsCount(), memberIds, memberTypes,
                 userCode);

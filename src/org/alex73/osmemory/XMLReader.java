@@ -23,6 +23,9 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+
+import osm.xmldatatypes.Member;
 
 import com.vividsolutions.jts.geom.Envelope;
 
@@ -30,6 +33,9 @@ import com.vividsolutions.jts.geom.Envelope;
  * This class reads XML file and stores all data into MemoryStorage.
  */
 public class XMLReader extends BaseReader {
+    public enum UPDATE_MODE {
+        CREATE, MODIFY, DELETE
+    };
 
     public static void main(String[] aa) throws Exception {
         MemoryStorage st = new XMLReader().read(new File(
@@ -57,8 +63,17 @@ public class XMLReader extends BaseReader {
 
     void applyTags(XMLDriver driver, OsmBase obj) {
         for (int i = 0; i < driver.tags.size(); i++) {
-            obj.tagKeys[i] = storage.getTagsPack().getTagCode(driver.tags.get(i).k);
-            obj.tagValues[i] = bytes(driver.tags.get(i).v);
+            obj.tagKeys[i] = storage.getTagsPack().getTagCode(driver.tags.get(i).getK());
+            obj.tagValues[i] = bytes(driver.tags.get(i).getV());
+        }
+    }
+
+    void applyTags(Map<String, String> tags, OsmBase obj) {
+        int i = 0;
+        for (Map.Entry<String, String> en : tags.entrySet()) {
+            obj.tagKeys[i] = storage.getTagsPack().getTagCode(en.getKey());
+            obj.tagValues[i] = bytes(en.getValue());
+            i++;
         }
     }
 
@@ -101,6 +116,24 @@ public class XMLReader extends BaseReader {
         }
     }
 
+    public void updateNode(UPDATE_MODE mode, long id, double dlat, double dlon, Map<String, String> tags,
+            String user) {
+        if (mode == UPDATE_MODE.DELETE) {
+            storage.removeNode(id);
+        } else {
+            int lat = (int) Math.round(dlat / IOsmNode.DIVIDER);
+            int lon = (int) Math.round(dlon / IOsmNode.DIVIDER);
+            if (tags.isEmpty()) {
+                storage.addSimpleNode(id, lat, lon);
+            } else {
+                short userCode = storage.getUsersPack().getTagCode(user);
+                OsmNode n = new OsmNode(id, tags.size(), lat, lon, userCode);
+                applyTags(tags, n);
+                storage.addNode(n);
+            }
+        }
+    }
+
     /**
      * Add ways that contains known nodes, i.e. inside specified crop box.
      */
@@ -124,23 +157,58 @@ public class XMLReader extends BaseReader {
         }
     }
 
+    public void updateWay(UPDATE_MODE mode, long id, long[] nodes, Map<String, String> tags, String user) {
+        if (mode == UPDATE_MODE.DELETE) {
+            storage.removeWay(id);
+        } else {
+            short userCode = storage.getUsersPack().getTagCode(user);
+            OsmWay w = new OsmWay(id, tags.size(), nodes, userCode);
+            applyTags(tags, w);
+            storage.addWay(w);
+        }
+    }
+
     /**
      * Add all relations.
      */
-    void createRelation(XMLDriver driver, long id, List<XMLDriver.Member> members, String user) {
+    void createRelation(XMLDriver driver, long id, List<Member> members, String user) {
         short userCode = storage.getUsersPack().getTagCode(user);
         long[] memberIds = new long[members.size()];
         byte[] memberTypes = new byte[members.size()];
         for (int i = 0; i < members.size(); i++) {
-            memberIds[i] = members.get(i).id;
-            memberTypes[i] = members.get(i).type;
+            memberIds[i] = members.get(i).getRef();
+            switch (members.get(i).getType()) {
+            case "node":
+                memberTypes[i] = IOsmObject.TYPE_NODE;
+                break;
+            case "way":
+                memberTypes[i] = IOsmObject.TYPE_WAY;
+                break;
+            case "relation":
+                memberTypes[i] = IOsmObject.TYPE_RELATION;
+                break;
+            default:
+                throw new RuntimeException();
+            }
         }
         OsmRelation result = new OsmRelation(id, driver.tags.size(), memberIds, memberTypes, userCode);
         for (int i = 0; i < result.memberRoles.length; i++) {
-            result.memberRoles[i] = storage.getRelationRolesPack().getTagCode(members.get(i).role);
+            result.memberRoles[i] = storage.getRelationRolesPack().getTagCode(members.get(i).getRole());
         }
         applyTags(driver, result);
         storage.relations.add(result);
+    }
+
+    public void updateRelation(UPDATE_MODE mode, long id, long[] memberIDs, byte[] memberTypes,
+            Map<String, String> tags, String user) {
+        if (mode == UPDATE_MODE.DELETE) {
+            storage.removeRelation(id);
+        } else {
+            short userCode = storage.getUsersPack().getTagCode(user);
+            OsmRelation r = new OsmRelation(id, tags.size(), memberIDs, memberTypes, userCode);
+            applyTags(tags, r);
+            storage.addRelation(r);
+        }
     }
 
     static final Charset UTF8 = Charset.forName("UTF-8");

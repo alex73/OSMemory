@@ -114,6 +114,13 @@ public class MemoryStorage {
         return i < 0 ? null : en.get(i);
     }
 
+    private static <T extends IOsmObject> void remove(List<T> en, long id) {
+        int i = binarySearch(en, id);
+        if (i >= 0) {
+            en.remove(i);
+        }
+    }
+
     private static <T extends IOsmObject> int binarySearch(List<T> en, long id) {
         int low = 0;
         int high = en.size() - 1;
@@ -132,6 +139,58 @@ public class MemoryStorage {
         return -1;
     }
 
+    private static <T extends IOsmObject> int getPositionForInsert(List<T> en, long id) {
+        int low = 0;
+        int high = en.size() - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            long midvalue = en.get(mid).getId();
+
+            if (midvalue < id)
+                low = mid + 1;
+            else if (midvalue > id)
+                high = mid - 1;
+            else
+                throw new RuntimeException("Object already exist");
+        }
+        if (low >= en.size()) {
+            return en.size();
+        }
+        long lowValue = en.get(low).getId();
+        if (lowValue > id) {
+            return low;
+        } else {
+            return low - 1;
+        }
+    }
+
+    private static <T extends IOsmObject> int getPositionForInsert(long[] ids, int idscount, long id) {
+        int low = 0;
+        int high = idscount - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            long midvalue = ids[mid];
+
+            if (midvalue < id)
+                low = mid + 1;
+            else if (midvalue > id)
+                high = mid - 1;
+            else
+                throw new RuntimeException("Object already exist");
+        }
+        if (low >= idscount) {
+            return idscount;
+        }
+        long lowValue = ids[low];
+        if (lowValue > id) {
+            return low;
+        } else {
+            return low - 1;
+        }
+    }
+
     public IOsmNode getNodeById(long id) {
         int pos = Arrays.binarySearch(simpleNodeIds, 0, simpleNodeCount, id);
         if (pos >= 0) {
@@ -141,12 +200,106 @@ public class MemoryStorage {
         }
     }
 
+    /**
+     * Remove node.
+     */
+    void removeNode(long id) {
+        int pos = Arrays.binarySearch(simpleNodeIds, 0, simpleNodeCount, id);
+        if (pos >= 0) {
+            System.arraycopy(simpleNodeIds, pos + 1, simpleNodeIds, pos, simpleNodeCount - pos - 1);
+            System.arraycopy(simpleNodeLats, pos + 1, simpleNodeLats, pos, simpleNodeCount - pos - 1);
+            System.arraycopy(simpleNodeLons, pos + 1, simpleNodeLons, pos, simpleNodeCount - pos - 1);
+            simpleNodeCount--;
+        } else {
+            remove(nodes, id);
+        }
+    }
+
+    /**
+     * Add or update node.
+     */
+    void addSimpleNode(long id, int lat, int lon) {
+        int pos = Arrays.binarySearch(simpleNodeIds, 0, simpleNodeCount, id);
+        if (pos < 0) {
+            removeNode(id);
+            if (simpleNodeIds.length == simpleNodeCount) {
+                // extend simple nodes
+                simpleNodeIds = Arrays.copyOf(simpleNodeIds, simpleNodeIds.length + 4096);
+                simpleNodeLats = Arrays.copyOf(simpleNodeLats, simpleNodeLats.length + 4096);
+                simpleNodeLons = Arrays.copyOf(simpleNodeLons, simpleNodeLons.length + 4096);
+            }
+            pos = getPositionForInsert(simpleNodeIds, simpleNodeCount, id);
+            System.arraycopy(simpleNodeIds, pos, simpleNodeIds, pos + 1, simpleNodeCount - pos);
+            System.arraycopy(simpleNodeLats, pos, simpleNodeLats, pos + 1, simpleNodeCount - pos);
+            System.arraycopy(simpleNodeLons, pos, simpleNodeLons, pos + 1, simpleNodeCount - pos);
+            simpleNodeCount++;
+        }
+
+        simpleNodeIds[pos] = id;
+        simpleNodeLats[pos] = lat;
+        simpleNodeLons[pos] = lon;
+    }
+
+    /**
+     * Add or update node.
+     */
+    void addNode(IOsmNode n) {
+        int posComplex = binarySearch(nodes, n.getId());
+        if (posComplex >= 0) {
+            nodes.set(posComplex, n);
+        } else {
+            removeNode(n.getId());
+            int pos = getPositionForInsert(nodes, n.getId());
+            nodes.add(pos, n);
+        }
+    }
+
     public IOsmWay getWayById(long id) {
         return getById(ways, id);
     }
 
+    /**
+     * Remove way.
+     */
+    void removeWay(long id) {
+        remove(ways, id);
+    }
+
+    /**
+     * Add or update way.
+     */
+    void addWay(IOsmWay w) {
+        int pos = binarySearch(ways, w.getId());
+        if (pos >= 0) {
+            ways.set(pos, w);
+        } else {
+            pos = getPositionForInsert(ways, w.getId());
+            ways.add(pos, w);
+        }
+    }
+
     public IOsmRelation getRelationById(long id) {
         return getById(relations, id);
+    }
+
+    /**
+     * Remove relation.
+     */
+    void removeRelation(long id) {
+        remove(relations, id);
+    }
+
+    /**
+     * Add or update relation.
+     */
+    void addRelation(IOsmRelation r) {
+        int pos = binarySearch(relations, r.getId());
+        if (pos >= 0) {
+            relations.set(pos, r);
+        } else {
+            pos = getPositionForInsert(relations, r.getId());
+            relations.add(pos, r);
+        }
     }
 
     /**

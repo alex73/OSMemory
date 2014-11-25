@@ -101,8 +101,11 @@ public class FastArea extends Fast {
             return false;
         }
         // iterate by full cells first - it will be faster than check inside geometry
-        Boolean covers = ext.iterateNodes(new ExtendedWay.NodesIterator() {
+        Boolean covers = ext.iterateNodes(new IExtendedObject.NodesIterator() {
             public Boolean processNode(IOsmNode node) {
+                if (node == null) {
+                    return null;
+                }
                 if (isSkipped(node)) {
                     return null;
                 }
@@ -118,8 +121,11 @@ public class FastArea extends Fast {
         }
 
         // iterate by geometries because there are no points inside full cells
-        covers = ext.iterateNodes(new ExtendedWay.NodesIterator() {
+        covers = ext.iterateNodes(new IExtendedObject.NodesIterator() {
             public Boolean processNode(IOsmNode node) {
+                if (node == null) {
+                    return null;
+                }
                 if (isSkipped(node)) {
                     return null;
                 }
@@ -174,42 +180,7 @@ public class FastArea extends Fast {
     }
 
     protected boolean coversWay(IOsmWay way) {
-        ExtendedWay ext = new ExtendedWay(way, storage);
-
-        // iterate by full cells first - it will be faster than check inside geometry
-        Boolean covers = ext.iterateNodes(new ExtendedWay.NodesIterator() {
-            public Boolean processNode(IOsmNode node) {
-                if (isSkipped(node)) {
-                    return null;
-                }
-                Cell c = getCellForPoint(node.getLat(), node.getLon());
-                if (c != null && c.isFull()) {
-                    return true;
-                }
-                return null;
-            }
-        });
-        if (covers != null) {
-            return covers;
-        }
-
-        // iterate by geometries because there are no points inside full cells
-        covers = ext.iterateNodes(new ExtendedWay.NodesIterator() {
-            public Boolean processNode(IOsmNode node) {
-                if (isSkipped(node)) {
-                    return null;
-                }
-                Cell c = getCellForPoint(node.getLat(), node.getLon());
-                if (c != null && !c.isFull() && coversCellNode(c, node)) {
-                    return true;
-                }
-                return null;
-            }
-        });
-        if (covers != null) {
-            return covers;
-        }
-        return false;
+        return covers(new ExtendedWay(way, storage));
     }
 
     protected boolean coversRelation(IOsmRelation rel, Set<String> processedRelations) {

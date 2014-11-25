@@ -25,7 +25,10 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
+import javax.xml.bind.JAXBContext;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -33,12 +36,31 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import osm.xmldatatypes.Member;
+import osm.xmldatatypes.Nd;
+import osm.xmldatatypes.Node;
+import osm.xmldatatypes.Osm;
+import osm.xmldatatypes.OsmBasicChange;
+import osm.xmldatatypes.OsmBasicType;
+import osm.xmldatatypes.OsmChange;
+import osm.xmldatatypes.Relation;
+import osm.xmldatatypes.Tag;
+import osm.xmldatatypes.Way;
+
 /**
  * Driver for OSM XML read. Format described at the http://wiki.openstreetmap.org/wiki/OSM_XML.
  */
 public class XMLDriver {
-    final XMLReader handler;
+    static JAXBContext CONTEXT;
+    static {
+        try {
+            CONTEXT = JAXBContext.newInstance(OsmChange.class, Osm.class);
+        } catch (Exception ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
 
+    final XMLReader handler;
     protected long id;
     protected double lat, lon;
     protected String user;
@@ -81,11 +103,16 @@ public class XMLDriver {
                         members.clear();
                         break;
                     case "member":
-                        members.add(new Member(attributes.getValue("type"), attributes.getValue("id"),
-                                attributes.getValue("role")));
+                        Member m = new Member();
+                        m.setType(attributes.getValue("type"));
+                        m.setRef(Long.parseLong(attributes.getValue("id")));
+                        m.setRole(attributes.getValue("role"));
                         break;
                     case "tag":
-                        tags.add(new Tag(attributes.getValue("k"), attributes.getValue("v")));
+                        Tag t = new Tag();
+                        t.setK(attributes.getValue("k"));
+                        t.setV(attributes.getValue("v"));
+                        tags.add(t);
                         break;
                     }
                 }
@@ -108,36 +135,99 @@ public class XMLDriver {
         }
     }
 
-    public static class Tag {
-        public final String k, v;
+    public void applyOsmChange(InputStream data, IApplyChangeCallback callback) throws Exception {
+        OsmChange changes = (OsmChange) CONTEXT.createUnmarshaller().unmarshal(data);
+        applyBasicChanges(XMLReader.UPDATE_MODE.CREATE, changes.getCreate(), callback);
+        applyBasicChanges(XMLReader.UPDATE_MODE.MODIFY, changes.getModify(), callback);
+        applyBasicChanges(XMLReader.UPDATE_MODE.DELETE, changes.getDelete(), callback);
+    }
 
-        public Tag(String k, String v) {
-            this.k = k;
-            this.v = v;
+    static Map<String, String> tags(OsmBasicType obj) {
+        Map<String, String> r = new TreeMap<>();
+        for (Tag t : obj.getTag()) {
+            r.put(t.getK(), t.getV());
+        }
+        return r;
+    }
+
+    static long[] nodes(List<Nd> nds) {
+        long[] r = new long[nds.size()];
+        for (int i = 0; i < r.length; i++) {
+            r[i] = nds.get(i).getRef();
+        }
+        return r;
+    }
+
+    static long[] memberIds(List<Member> members) {
+        long[] r = new long[members.size()];
+        for (int i = 0; i < r.length; i++) {
+            r[i] = members.get(i).getRef();
+        }
+        return r;
+    }
+
+    static byte[] memberTypes(List<Member> members) {
+        byte[] r = new byte[members.size()];
+        for (int i = 0; i < r.length; i++) {
+            switch (members.get(i).getType()) {
+            case "node":
+                r[i] = IOsmObject.TYPE_NODE;
+                break;
+            case "way":
+                r[i] = IOsmObject.TYPE_WAY;
+                break;
+            case "relation":
+                r[i] = IOsmObject.TYPE_RELATION;
+                break;
+            default:
+                throw new RuntimeException("Unknown member type: " + members.get(i).getType());
+            }
+        }
+        return r;
+    }
+
+    void applyBasicChanges(XMLReader.UPDATE_MODE mode, List<OsmBasicChange> changes,
+            IApplyChangeCallback callback) {
+        for (OsmBasicChange c : changes) {
+            for (Node n : c.getNode()) {
+                callback.beforeUpdateNode(n.getId());
+                handler.updateNode(mode, n.getId(), n.getLat(), n.getLon(), tags(n), n.getUser());
+                callback.afterUpdateNode(n.getId());
+            }
+            for (Way w : c.getWay()) {
+                callback.beforeUpdateWay(w.getId());
+                handler.updateWay(mode, w.getId(), nodes(w.getNd()), tags(w), w.getUser());
+                callback.afterUpdateWay(w.getId());
+            }
+            for (Relation r : c.getRelation()) {
+                callback.beforeUpdateRelation(r.getId());
+                handler.updateRelation(mode, r.getId(), memberIds(r.getMember()), memberTypes(r.getMember()),
+                        tags(r), r.getUser());
+                callback.afterUpdateRelation(r.getId());
+            }
         }
     }
 
-    public static class Member {
-        public final byte type;
-        public final long id;
-        public final String role;
+    /**
+     * Application can use call back for each update. For define area of updates, for example.
+     */
+    public static class IApplyChangeCallback {
+        protected void beforeUpdateNode(long id) {
+        }
 
-        public Member(String type, String id, String role) {
-            switch (type) {
-            case "node":
-                this.type = IOsmObject.TYPE_NODE;
-                break;
-            case "way":
-                this.type = IOsmObject.TYPE_WAY;
-                break;
-            case "relation":
-                this.type = IOsmObject.TYPE_RELATION;
-                break;
-            default:
-                throw new RuntimeException();
-            }
-            this.id = Long.parseLong(id);
-            this.role = role;
+        protected void afterUpdateNode(long id) {
+        }
+
+        protected void beforeUpdateWay(long id) {
+        }
+
+        protected void afterUpdateWay(long id) {
+        }
+
+        protected void beforeUpdateRelation(long id) {
+        }
+
+        protected void afterUpdateRelation(long id) {
         }
     }
 }
