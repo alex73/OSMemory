@@ -45,7 +45,7 @@ public class ExtendedRelation implements IExtendedObject {
     private final IOsmRelation relation;
     private final MemoryStorage storage;
 
-    private Envelope boundingBox;
+    private BoundingBox boundingBox;
     private boolean allPointsDefined;
     private Geometry area;
 
@@ -62,7 +62,7 @@ public class ExtendedRelation implements IExtendedObject {
         return relation;
     }
 
-    public Envelope getBoundingBox() {
+    public BoundingBox getBoundingBox() {
         checkProcessed();
         return boundingBox;
     }
@@ -241,13 +241,13 @@ public class ExtendedRelation implements IExtendedObject {
         if (boundingBox != null) {
             return;
         }
-        boundingBox = new Envelope();
+        boundingBox = new BoundingBox();
         allPointsDefined = true;
         iterateNodes(new NodesIterator() {
             @Override
             public Boolean processNode(IOsmNode n) {
                 if (n != null) {
-                    boundingBox.expandToInclude(n.getLongitude(), n.getLatitude());
+                    boundingBox.expandToInclude(n.getLat(), n.getLon());
                 } else {
                     allPointsDefined = false;
                 }

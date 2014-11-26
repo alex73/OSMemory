@@ -36,7 +36,7 @@ public class ExtendedWay implements IExtendedObject {
     private final IOsmWay way;
     private final MemoryStorage storage;
 
-    private Envelope boundingBox;
+    private BoundingBox boundingBox;
     private boolean allPointsDefined;
     private Coordinate[] points;
     private IOsmNode[] nodes;
@@ -53,7 +53,7 @@ public class ExtendedWay implements IExtendedObject {
         return way;
     }
 
-    public Envelope getBoundingBox() {
+    public BoundingBox getBoundingBox() {
         checkProcessed();
         return boundingBox;
     }
@@ -120,12 +120,12 @@ public class ExtendedWay implements IExtendedObject {
             return; // already loaded
         }
         checkNodes();
-        boundingBox = new Envelope();
+        boundingBox = new BoundingBox();
         points = new Coordinate[nodes.length];
         for (int i = 0; i < nodes.length; i++) {
             IOsmNode n = nodes[i];
             if (n != null) {
-                boundingBox.expandToInclude(n.getLongitude(), n.getLatitude());
+                boundingBox.expandToInclude(n.getLat(), n.getLon());
                 points[i] = GeometryHelper.coord(n.getLongitude(), n.getLatitude());
             }
         }

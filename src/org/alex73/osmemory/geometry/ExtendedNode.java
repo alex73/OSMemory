@@ -32,7 +32,7 @@ public class ExtendedNode implements IExtendedObject {
     private final IOsmNode node;
     private final MemoryStorage storage;
 
-    private Envelope boundingBox;
+    private BoundingBox boundingBox;
 
     public ExtendedNode(IOsmNode node, MemoryStorage storage) {
         this.node = node;
@@ -44,7 +44,7 @@ public class ExtendedNode implements IExtendedObject {
         return node;
     }
 
-    public Envelope getBoundingBox() {
+    public BoundingBox getBoundingBox() {
         checkProcessed();
         return boundingBox;
     }
@@ -53,8 +53,8 @@ public class ExtendedNode implements IExtendedObject {
         if (boundingBox != null) {
             return; // already loaded
         }
-        boundingBox = new Envelope();
-        boundingBox.expandToInclude(node.getLongitude(), node.getLatitude());
+        boundingBox = new BoundingBox();
+        boundingBox.expandToInclude(node.getLat(), node.getLon());
     }
 
     @Override

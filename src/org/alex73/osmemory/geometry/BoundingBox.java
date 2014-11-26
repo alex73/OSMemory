@@ -19,20 +19,27 @@
 
 package org.alex73.osmemory.geometry;
 
-import org.alex73.osmemory.IOsmNode;
-import org.alex73.osmemory.IOsmObject;
-
 /**
- * Interface for all External... that have bounds.
+ * Bounding box with int values.
  */
-public interface IExtendedObject {
-    BoundingBox getBoundingBox();
+public class BoundingBox {
+    public int minLat = Integer.MAX_VALUE;
+    public int maxLat = Integer.MIN_VALUE;
+    public int minLon = Integer.MAX_VALUE;
+    public int maxLon = Integer.MIN_VALUE;
 
-    IOsmObject getObject();
-
-    Boolean iterateNodes(NodesIterator iterator);
-
-    interface NodesIterator {
-        Boolean processNode(IOsmNode node);
+    public synchronized void expandToInclude(int lat, int lon) {
+        if (minLat > lat) {
+            minLat = lat;
+        }
+        if (minLon > lon) {
+            minLon = lon;
+        }
+        if (maxLat < lat) {
+            maxLat = lat;
+        }
+        if (maxLon < lon) {
+            maxLon = lon;
+        }
     }
 }

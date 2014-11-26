@@ -28,7 +28,6 @@ import org.alex73.osmemory.IOsmRelation;
 import org.alex73.osmemory.IOsmWay;
 import org.alex73.osmemory.MemoryStorage;
 
-import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.Point;
@@ -67,17 +66,17 @@ public class FastArea extends Fast {
         this(OsmHelper.areaFromObject(areaObject, storage), storage);
     }
 
-    public boolean mayCovers(Envelope box) {
-        if (maxx < box.getMinX() / IOsmNode.DIVIDER) {
+    public boolean mayCovers(BoundingBox box) {
+        if (maxx < box.minLon) {
             return false;
         }
-        if (minx > box.getMaxX() / IOsmNode.DIVIDER) {
+        if (minx > box.maxLon) {
             return false;
         }
-        if (maxy < box.getMinY() / IOsmNode.DIVIDER) {
+        if (maxy < box.minLat) {
             return false;
         }
-        if (miny > box.getMaxY() / IOsmNode.DIVIDER) {
+        if (miny > box.maxLat) {
             return false;
         }
         return true;
