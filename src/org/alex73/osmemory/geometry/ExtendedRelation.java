@@ -76,7 +76,7 @@ public class ExtendedRelation implements IExtendedObject {
         return borderNodes;
     }
 
-    public Geometry getArea() {
+    public synchronized Geometry getArea() {
         if (area == null) {
             List<Line> lines = new ArrayList<>();
             for (int i = 0; i < relation.getMembersCount(); i++) {
@@ -237,7 +237,7 @@ public class ExtendedRelation implements IExtendedObject {
         return place >= 0;
     }
 
-    protected void checkProcessed() {
+    protected synchronized void checkProcessed() {
         if (boundingBox != null) {
             return;
         }

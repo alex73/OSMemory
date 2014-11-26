@@ -68,7 +68,7 @@ public class ExtendedWay implements IExtendedObject {
         return nids.length >= 3 && nids[0] == nids[nids.length - 1];
     }
 
-    public LineString getLine() throws Exception {
+    public synchronized LineString getLine() throws Exception {
         checkProcessed();
         if (!allPointsDefined) {
             return null;
@@ -90,7 +90,7 @@ public class ExtendedWay implements IExtendedObject {
         return line;
     }
 
-    public Geometry getArea() {
+    public synchronized Geometry getArea() {
         checkProcessed();
         if (!isClosed()) {
             throw new RuntimeException("Impossible to create polygon from way #" + way.getId()
@@ -115,7 +115,7 @@ public class ExtendedWay implements IExtendedObject {
         return area;
     }
 
-    protected void checkProcessed() {
+    protected synchronized void checkProcessed() {
         if (boundingBox != null) {
             return; // already loaded
         }
@@ -131,7 +131,7 @@ public class ExtendedWay implements IExtendedObject {
         }
     }
 
-    protected void checkNodes() {
+    protected synchronized void checkNodes() {
         if (nodes != null) {
             return; // already filled
         }

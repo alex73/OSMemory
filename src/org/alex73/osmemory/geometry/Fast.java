@@ -63,7 +63,7 @@ public class Fast {
         return polygon;
     }
 
-    public Cell getCellForPoint(int lat, int lon) {
+    public synchronized Cell getCellForPoint(int lat, int lon) {
         int x = lon;
         int y = lat;
         if (x < minx || x >= maxx || y < miny || y >= maxy) {
@@ -98,9 +98,16 @@ public class Fast {
     }
 
     public Cell getCell(int ix, int iy) {
-        if (cached[ix][iy] == null) {
-            cached[ix][iy] = calcCell(ix, iy);
+        if (cached[ix][iy] != null) {
+            return cached[ix][iy];
         }
+
+        synchronized (this) {
+            if (cached[ix][iy] == null) {
+                cached[ix][iy] = calcCell(ix, iy);
+            }
+        }
+
         return cached[ix][iy];
     }
 

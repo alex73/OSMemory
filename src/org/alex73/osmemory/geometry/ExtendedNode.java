@@ -49,7 +49,7 @@ public class ExtendedNode implements IExtendedObject {
         return boundingBox;
     }
 
-    protected void checkProcessed() {
+    protected synchronized void checkProcessed() {
         if (boundingBox != null) {
             return; // already loaded
         }
