@@ -56,4 +56,25 @@ Idea is to split big polygon into ~400 parts, then check every part. Since most 
      FastArea city = new FastArea(cityPolygon, storage);
      storage.byTag("highway", o -> city.contains(o), o -> System.out.println(o.getTag("name"));
 
+Multithreading
+--------------
+MemoryStorage don't need some special multithreading support after full load from file, because all operations are read-only. But if you want to update MemoryStorage by changeset or manually, you need to block access to MemoryStorage for update time youself.
+
+Nodes/ways/relations retrieving don't need some special multithreading support since all calls will be read-only.
+
+FastArea and Extended... objects support multithreading for all operations.
+
+For example, you can use parallel processing:
+
+    List<FastArea> cities = ...
+    cities.parallelStream().filter(c->c.covers(obj)).forEach(...);
+
+Limitations
+-----------
+
+Library doesn't decide that some line is inside border, if all points of line are outside of border. Inside check processed only by points of way and relations. 
+
+Dependnecies
+------------
+
 Library uses JTS for some spatial calculations.
