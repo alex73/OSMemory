@@ -186,6 +186,14 @@ public class XMLDriver {
         return r;
     }
 
+    static String[] memberRoles(List<Member> members) {
+        String[] r = new String[members.size()];
+        for (int i = 0; i < r.length; i++) {
+            r[i] = members.get(i).getRole();
+        }
+        return r;
+    }
+
     void applyBasicChanges(XMLReader.UPDATE_MODE mode, List<OsmBasicChange> changes,
             IApplyChangeCallback callback) {
         for (OsmBasicChange c : changes) {
@@ -202,7 +210,7 @@ public class XMLDriver {
             for (Relation r : c.getRelation()) {
                 callback.beforeUpdateRelation(r.getId());
                 handler.updateRelation(mode, r.getId(), memberIds(r.getMember()), memberTypes(r.getMember()),
-                        tags(r), r.getUser());
+                        memberRoles(r.getMember()), tags(r), r.getUser());
                 callback.afterUpdateRelation(r.getId());
             }
         }
@@ -211,23 +219,17 @@ public class XMLDriver {
     /**
      * Application can use call back for each update. For define area of updates, for example.
      */
-    public static class IApplyChangeCallback {
-        protected void beforeUpdateNode(long id) {
-        }
+    public interface IApplyChangeCallback {
+        void beforeUpdateNode(long id);
 
-        protected void afterUpdateNode(long id) {
-        }
+        void afterUpdateNode(long id);
 
-        protected void beforeUpdateWay(long id) {
-        }
+        void beforeUpdateWay(long id);
 
-        protected void afterUpdateWay(long id) {
-        }
+        void afterUpdateWay(long id);
 
-        protected void beforeUpdateRelation(long id) {
-        }
+        void beforeUpdateRelation(long id);
 
-        protected void afterUpdateRelation(long id) {
-        }
+        void afterUpdateRelation(long id);
     }
 }

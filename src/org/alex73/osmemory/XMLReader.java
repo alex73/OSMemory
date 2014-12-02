@@ -200,12 +200,15 @@ public class XMLReader extends BaseReader {
     }
 
     public void updateRelation(UPDATE_MODE mode, long id, long[] memberIDs, byte[] memberTypes,
-            Map<String, String> tags, String user) {
+            String[] memberRoles, Map<String, String> tags, String user) {
         if (mode == UPDATE_MODE.DELETE) {
             storage.removeRelation(id);
         } else {
             short userCode = storage.getUsersPack().getTagCode(user);
             OsmRelation r = new OsmRelation(id, tags.size(), memberIDs, memberTypes, userCode);
+            for (int i = 0; i < r.memberRoles.length; i++) {
+                r.memberRoles[i] = storage.getRelationRolesPack().getTagCode(memberRoles[i]);
+            }
             applyTags(tags, r);
             storage.addRelation(r);
         }
