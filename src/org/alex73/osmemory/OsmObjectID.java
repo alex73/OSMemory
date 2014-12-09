@@ -19,49 +19,47 @@
 
 package org.alex73.osmemory;
 
-/**
- * Way object representation.
- */
-public class OsmWay extends OsmBase implements IOsmWay {
-    private final long[] nodeIds;
+public class OsmObjectID implements IOsmObjectID {
+    private final int type;
+    private final long id;
 
-    public OsmWay(long id, int tagsCount, long[] nodeIds, short user) {
-        super(id, tagsCount, user);
-        this.nodeIds = nodeIds;
-    }
-
-    @Override
-    public long[] getNodeIds() {
-        return nodeIds;
+    public OsmObjectID(int type, long id) {
+        this.type = type;
+        this.id = id;
     }
 
     @Override
     public int getType() {
-        return TYPE_WAY;
+        return type;
     }
 
     @Override
-    public boolean isNode() {
-        return false;
+    public long getId() {
+        return id;
     }
 
     @Override
-    public boolean isWay() {
-        return true;
+    public int hashCode() {
+        return Long.hashCode(id) + type;
     }
 
     @Override
-    public boolean isRelation() {
-        return false;
+    public boolean equals(Object obj) {
+        OsmObjectID o = (OsmObjectID) obj;
+        return type == o.type && id == o.id;
     }
 
     @Override
-    public String getObjectCode() {
-        return IOsmObject.getWayCode(id);
-    }
-
-    @Override
-    public IOsmObjectID getObjectID() {
-        return new OsmObjectID(TYPE_WAY, id);
+    public String toString() {
+        switch (type) {
+        case IOsmObject.TYPE_NODE:
+            return IOsmObject.getNodeCode(id);
+        case IOsmObject.TYPE_WAY:
+            return IOsmObject.getWayCode(id);
+        case IOsmObject.TYPE_RELATION:
+            return IOsmObject.getRelationCode(id);
+        default:
+            return "UNKNOWN TYPE: " + type;
+        }
     }
 }

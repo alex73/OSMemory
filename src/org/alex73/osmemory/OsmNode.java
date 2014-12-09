@@ -79,4 +79,9 @@ public class OsmNode extends OsmBase implements IOsmNode {
     public String getObjectCode() {
         return IOsmObject.getNodeCode(id);
     }
+
+    @Override
+    public IOsmObjectID getObjectID() {
+        return new OsmObjectID(TYPE_NODE, id);
+    }
 }

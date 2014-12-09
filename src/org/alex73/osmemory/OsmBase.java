@@ -102,4 +102,9 @@ public abstract class OsmBase implements IOsmObject {
     public String getUser(MemoryStorage storage) {
         return storage.getUsersPack().getTagName(user);
     }
+
+    @Override
+    public String toString() {
+        return getObjectCode();
+    }
 }

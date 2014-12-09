@@ -123,6 +123,11 @@ public class OsmSimpleNode implements IOsmNode {
     }
 
     @Override
+    public IOsmObjectID getObjectID() {
+        return new OsmObjectID(TYPE_NODE, id);
+    }
+
+    @Override
     public short getUser() {
         return -1;
     }

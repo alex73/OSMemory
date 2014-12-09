@@ -67,6 +67,11 @@ public class OsmRelation extends OsmBase implements IOsmRelation {
     }
 
     @Override
+    public IOsmObjectID getObjectID() {
+        return new OsmObjectID(TYPE_RELATION, id);
+    }
+
+    @Override
     public int getMembersCount() {
         return memberIDs.length;
     }

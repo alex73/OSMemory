@@ -48,6 +48,11 @@ public interface IOsmObject {
     long getId();
 
     /**
+     * Object ID as object.
+     */
+    IOsmObjectID getObjectID();
+
+    /**
      * Check if object has tag.
      */
     boolean hasTag(short tagKey);

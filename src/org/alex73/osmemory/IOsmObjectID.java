@@ -19,49 +19,8 @@
 
 package org.alex73.osmemory;
 
-/**
- * Way object representation.
- */
-public class OsmWay extends OsmBase implements IOsmWay {
-    private final long[] nodeIds;
+public interface IOsmObjectID {
+    int getType();
 
-    public OsmWay(long id, int tagsCount, long[] nodeIds, short user) {
-        super(id, tagsCount, user);
-        this.nodeIds = nodeIds;
-    }
-
-    @Override
-    public long[] getNodeIds() {
-        return nodeIds;
-    }
-
-    @Override
-    public int getType() {
-        return TYPE_WAY;
-    }
-
-    @Override
-    public boolean isNode() {
-        return false;
-    }
-
-    @Override
-    public boolean isWay() {
-        return true;
-    }
-
-    @Override
-    public boolean isRelation() {
-        return false;
-    }
-
-    @Override
-    public String getObjectCode() {
-        return IOsmObject.getWayCode(id);
-    }
-
-    @Override
-    public IOsmObjectID getObjectID() {
-        return new OsmObjectID(TYPE_WAY, id);
-    }
+    long getId();
 }

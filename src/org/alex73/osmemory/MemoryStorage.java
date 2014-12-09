@@ -305,10 +305,10 @@ public class MemoryStorage {
     /**
      * Get object by code like n123, w456, r789.
      */
-    public IOsmObject getObject(String code) throws Exception {
+    public IOsmObject getObject(String code) {
         Matcher m = RE_OBJECT_CODE.matcher(code.trim());
         if (!m.matches()) {
-            throw new Exception("Няправільны фарматы code: " + code);
+            throw new RuntimeException("Няправільны фарматы code: " + code);
         }
         long idl = Long.parseLong(m.group(2));
         switch (m.group(1)) {
@@ -319,7 +319,23 @@ public class MemoryStorage {
         case "r":
             return getRelationById(idl);
         default:
-            throw new Exception("Wrong code format: " + code);
+            throw new RuntimeException("Wrong code format: " + code);
+        }
+    }
+
+    /**
+     * Get object by Object ID.
+     */
+    public IOsmObject getObject(IOsmObjectID objID) {
+        switch (objID.getType()) {
+        case IOsmObject.TYPE_NODE:
+            return getNodeById(objID.getId());
+        case IOsmObject.TYPE_WAY:
+            return getWayById(objID.getId());
+        case IOsmObject.TYPE_RELATION:
+            return getRelationById(objID.getId());
+        default:
+            throw new RuntimeException("Wrong type: " + objID.getType());
         }
     }
 
