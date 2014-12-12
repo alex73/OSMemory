@@ -198,20 +198,20 @@ public class XMLDriver {
             IApplyChangeCallback callback) {
         for (OsmBasicChange c : changes) {
             for (Node n : c.getNode()) {
-                callback.beforeUpdateNode(n.getId());
+                callback.beforeUpdateNode(mode, n);
                 handler.updateNode(mode, n.getId(), n.getLat(), n.getLon(), tags(n), n.getUser());
-                callback.afterUpdateNode(n.getId());
+                callback.afterUpdateNode(mode, n);
             }
             for (Way w : c.getWay()) {
-                callback.beforeUpdateWay(w.getId());
+                callback.beforeUpdateWay(mode, w);
                 handler.updateWay(mode, w.getId(), nodes(w.getNd()), tags(w), w.getUser());
-                callback.afterUpdateWay(w.getId());
+                callback.afterUpdateWay(mode, w);
             }
             for (Relation r : c.getRelation()) {
-                callback.beforeUpdateRelation(r.getId());
+                callback.beforeUpdateRelation(mode, r);
                 handler.updateRelation(mode, r.getId(), memberIds(r.getMember()), memberTypes(r.getMember()),
                         memberRoles(r.getMember()), tags(r), r.getUser());
-                callback.afterUpdateRelation(r.getId());
+                callback.afterUpdateRelation(mode, r);
             }
         }
     }
@@ -220,16 +220,16 @@ public class XMLDriver {
      * Application can use call back for each update. For define area of updates, for example.
      */
     public interface IApplyChangeCallback {
-        void beforeUpdateNode(long id);
+        void beforeUpdateNode(XMLReader.UPDATE_MODE mode, Node node);
 
-        void afterUpdateNode(long id);
+        void afterUpdateNode(XMLReader.UPDATE_MODE mode, Node node);
 
-        void beforeUpdateWay(long id);
+        void beforeUpdateWay(XMLReader.UPDATE_MODE mode, Way way);
 
-        void afterUpdateWay(long id);
+        void afterUpdateWay(XMLReader.UPDATE_MODE mode, Way way);
 
-        void beforeUpdateRelation(long id);
+        void beforeUpdateRelation(XMLReader.UPDATE_MODE mode, Relation relation);
 
-        void afterUpdateRelation(long id);
+        void afterUpdateRelation(XMLReader.UPDATE_MODE mode, Relation relation);
     }
 }
