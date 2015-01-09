@@ -107,6 +107,7 @@ public class XMLDriver {
                         m.setType(attributes.getValue("type"));
                         m.setRef(Long.parseLong(attributes.getValue("id")));
                         m.setRole(attributes.getValue("role"));
+                        members.add(m);
                         break;
                     case "tag":
                         Tag t = new Tag();
