@@ -26,7 +26,7 @@
             </manifest>
         </jar>
         <copy todir="dist">
-            <fileset dir="lib" />
+            <fileset dir="lib" includes="*.jar"/>
         </copy>
     </target>
 </project>

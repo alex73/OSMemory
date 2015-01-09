@@ -1,7 +1,7 @@
 OSMemory
 ========
 
-Library for OSM data processing. It can be used for validators, extractors, etc.
+Library for OpenStreetMap data processing. It can be used for validators, extractors, etc.
 
 When I created some validators, there were some requirements:
 
