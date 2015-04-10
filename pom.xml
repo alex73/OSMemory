@@ -6,7 +6,7 @@
     <groupId>org.alex73</groupId>
     <artifactId>OSMemory</artifactId>
     <packaging>jar</packaging>
-    <version>1.10</version>
+    <version>1.11</version>
     <name>OSMemory</name>
     <description>Library for OpenStreetMap data processing</description>
     <url>https://github.com/alex73/OSMemory</url>
