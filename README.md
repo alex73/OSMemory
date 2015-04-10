@@ -3,6 +3,8 @@ OSMemory
 
 Library for OpenStreetMap data processing. It can be used for validators, extractors, etc.
 
+Stream processing is not enough for many tasks where you need to load coordinates of many ways and relations, find by id, by area, by attributes. Only PostgreSQL can do it today, but it requires installation and long data loading.
+
 When I created some validators, there were some requirements:
 
 * Validators should be simple for write, installation and running
@@ -10,6 +12,8 @@ When I created some validators, there were some requirements:
 * Since it should work fast, it should store data in memory
 
 That's why this library was written.
+
+
 
 Memory is cheap today, but it's impossible to load full planet in memory yet. Today it's enough for loading region.
 If it will be required, there are some additional ways for memory usage optimization.
