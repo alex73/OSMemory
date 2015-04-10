@@ -32,11 +32,15 @@ import org.alex73.osmemory.IOsmRelation;
 import org.alex73.osmemory.IOsmWay;
 import org.alex73.osmemory.MemoryStorage;
 
+import com.vividsolutions.jts.algorithm.LineIntersector;
+import com.vividsolutions.jts.algorithm.RobustLineIntersector;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Polygon;
+import com.vividsolutions.jts.geomgraph.GeometryGraph;
+import com.vividsolutions.jts.geomgraph.index.SegmentIntersector;
 
 /**
  * Class for cache some extended information about relation, like boundary, geometry, etc.
@@ -195,7 +199,15 @@ public class ExtendedRelation implements IExtendedObject {
                     + tail.get(tail.size() - 1));
         }
         if (!s.isSimple()) {
-            throw new RuntimeException("Self-intersected line: " + s);
+            GeometryGraph graph = new GeometryGraph(0, s);
+            LineIntersector li = new RobustLineIntersector();
+            SegmentIntersector si = graph.computeSelfNodes(li, true);
+            if (si.hasProperInteriorIntersection()) {
+                throw new RuntimeException("Self-intersection for " + relation.getObjectCode()
+                        + " near point " + si.getProperIntersectionPoint());
+            }else {
+                throw new RuntimeException("Self-intersected line: " + s);
+            }
         }
         return s;
     }
