@@ -105,7 +105,7 @@ public class XMLDriver {
                     case "member":
                         Member m = new Member();
                         m.setType(attributes.getValue("type"));
-                        m.setRef(Long.parseLong(attributes.getValue("id")));
+                        m.setRef(Long.parseLong(attributes.getValue("ref")));
                         m.setRole(attributes.getValue("role"));
                         members.add(m);
                         break;
